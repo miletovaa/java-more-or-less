@@ -1,6 +1,6 @@
 # More or less, less is more
 
-Write a Java program that allows playing the game ”More or less, less is more”. The game
+Write a Java program that allows playing the game "More or less, less is more". The game
 consists of a two-dimensional field of size n × n. Each element is a button with a number.
 
 ## Game Initialization:
@@ -14,17 +14,14 @@ consists of a two-dimensional field of size n × n. Each element is a button wit
 above the field.
 
 ## Playing:
-• The player selects a button (with a pre-defined digit 1 - 9) to choose possible can-
-didates for the next move.
+• The player selects a button (with a pre-defined digit 1 - 9) to choose possible candidates for the next move.
 
 • Initially, Previous is invalid. The player starts by choosing any button (Current)
 on the field, allowing the selection of all rows and columns divisible by the chosen
 button’s digit.
 
-1. The player can choose a button at the intersection of possible rows and co-
-lumns between Previous and Current. This choice swaps the Current va-
-lue to Previous, and Current becomes the digit value of the chosen button
-(P revious = Current; Current = New value).
+1. The player can choose a button at the intersection of possible rows and columns between Previous and Current. This choice swaps the Current value to Previous, and Current becomes the digit value of the chosen button
+(Previous = Current; Current = New value).
 2. Increase the total sum by the value of Current. The selected button becomes
 inactive.
 3. Decrement the move counter and repeat from step 1 until the move counter
@@ -35,7 +32,7 @@ exceeds 0.
 
 ## Tasks:
 
-- [ ] Develop a user interface for playing with a new field layout for each game, with a
+- [x] Develop a user interface for playing with a new field layout for each game, with a
 basic field size 10 × 10 (n = 10). (50 points)
 
 - [ ] Create a user interface that saves the game field to a file, allowing the choice of a
@@ -44,8 +41,7 @@ field layout from the file during play. (15 points)
 - [ ] Implement a game control menu (restart, set field size, set number of moves, set
 target value). (10 points)
 
-- [ ] Enhance the game control menu with difficulty options (easy, medium, hard), affec-
-ting the target value and the number of moves. (10 points)
+- [ ] Enhance the game control menu with difficulty options (easy, medium, hard), affecting the target value and the number of moves. (10 points)
 
 - [ ] Display the deviation from the final value in the graphical user interface when the
 move counter reaches zero (solution quality). (5 points)
@@ -61,6 +57,5 @@ the new value if the user selected a possible button B. (10 points)
 help the user approach the target value. (5 points)
 
 
-*Note: Ensure correct use of object-oriented programming principles, avoid static met-
-hods, and define individual program modules as independent classes. Follow proper coding
+*Note: Ensure correct use of object-oriented programming principles, avoid static methods, and define individual program modules as independent classes. Follow proper coding
 practices. (-5 points for violations)*

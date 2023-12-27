@@ -1,37 +1,43 @@
 package org.example;
 
 import javax.swing.*;
+import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.Random;
 
-class Button {
-    boolean isActive;
-    JButton j;
-    String value;
+class Button extends JButton {
+    private static final Color activeBtn = new Color(98, 240, 150);
+    private static final Color inactiveBtn = new Color(209, 209, 209);
 
-    public Button(JButton button) {
-        this(true, button);
+    public Button(String text) {
+        super(text);
+        this.setEnabled(true);
     }
-    public Button(boolean isActive, JButton j) {
-        this.isActive = isActive;
-        this.j = j;
-        this.value = j.getText();
+
+    @Override
+    public void setEnabled(boolean enabled) {
+        super.setEnabled(enabled);
+        setBackground(enabled ? activeBtn : inactiveBtn);
     }
 }
 
 class ButtonClickListener implements ActionListener {
-    private final String value;
+    private final JButton btn;
+    private final int value;
 
-    public ButtonClickListener(String value) {
-        this.value = value;
+    public ButtonClickListener(JButton btn) {
+        this.btn = btn;
+        this.value = Integer.parseInt(btn.getText());
     }
 
     @Override
     public void actionPerformed(ActionEvent e) {
         Game.movesLeft -= 1;
-        Game.currentSum += Integer.parseInt(value);
+        Game.currentSum += value;
+        Game.Current = value;
         Game.move();
+        btn.setEnabled(false);
     }
 }
 
@@ -53,6 +59,20 @@ class Label {
 }
 
 class UIConstruct {
+    public static int alert(JFrame frame, String title, String message, int messageType) {
+        Object[] options = { "Restart", "Exit" };
+        return JOptionPane.showOptionDialog(
+                frame,
+                message,
+                title,
+                JOptionPane.DEFAULT_OPTION,
+                messageType,
+                null,
+                options,
+                options[0]
+        );
+    }
+
     public static Label createLabel(JFrame frame, String title, int value, int x, int y) {
         int width = 140; int height = 20;
         Label label = new Label(new JLabel(), title, value);
@@ -64,17 +84,19 @@ class UIConstruct {
 
 class Game {
     private static JFrame frame;
-    private final Button[][] buttons;
+    private static Button[][] buttons;
     public static int movesLeft;
     public static int currentSum;
+    public static int Previous;
+    public static int Current;
 
     private static Label sumValueLabel;
     private static Label movesLeftLabel;
 
     // Game settings
     private static final int N = 10; // N*N is a field size
-    private static final int totalMoves = 3;
-    private static final int targetValue = 100;
+    private static final int totalMoves = 10;
+    private static final int targetValue = 20;
 
     // UI settings
     private static final int BUTTON_SIZE = 50; // width and height of the buttons
@@ -84,6 +106,7 @@ class Game {
         String TITLE = "More or less, less is more";
         frame = new JFrame(TITLE);
         buttons = new Button[N][N];
+        Previous = 0;
     }
 
     public void initialize() {
@@ -105,10 +128,10 @@ class Game {
         for (int i = 0; i < N; i++) {
             for (int j = 0; j < N; j++) {
                 int randomDigit = random.nextInt(9) + 1;
-                buttons[i][j] = new Button(new JButton(Integer.toString(randomDigit)));
-                buttons[i][j].j.setBounds(x, y, BUTTON_SIZE, BUTTON_SIZE);
-                buttons[i][j].j.addActionListener(new ButtonClickListener(buttons[i][j].value));
-                frame.add(buttons[i][j].j);
+                buttons[i][j] = new Button(Integer.toString(randomDigit));
+                buttons[i][j].setBounds(x, y, BUTTON_SIZE, BUTTON_SIZE);
+                buttons[i][j].addActionListener(new ButtonClickListener(buttons[i][j]));
+                frame.add(buttons[i][j]);
                 x += BUTTON_SIZE;
             }
             y += BUTTON_SIZE;
@@ -126,6 +149,21 @@ class Game {
         frame.setVisible(true);
     }
 
+    public static void fieldValidation() {
+        for (int i = 0; i < N; i++) {
+            for (int j = 0; j < N; j++) {
+                buttons[i][j].setEnabled(true);
+                int col = i + 1; int row = j + 1;
+                if (Previous == 0) {
+                    buttons[i][j].setEnabled(col % Current == 0 || row % Current == 0);
+                } else {
+                    buttons[i][j].setEnabled((col % Current == 0 && col % Previous == 0) || (row % Current == 0 && row % Previous == 0));
+                }
+            }
+        }
+        Previous = Current;
+    }
+
     public static void move() {
         sumValueLabel.value = currentSum;
         movesLeftLabel.value = movesLeft;
@@ -133,14 +171,41 @@ class Game {
         sumValueLabel.updateLabel();
         movesLeftLabel.updateLabel();
 
-        // TODO: add game logic
+        if (currentSum >= targetValue) win();
+        else {
+            if (movesLeft == 0) gameOver();
+            fieldValidation();
+        }
+    }
 
-        if (movesLeft == 0) gameOver();
+    private static void win() {
+        int response = UIConstruct.alert(frame, "Win", "You won! Congratulations. Restart?", JOptionPane.PLAIN_MESSAGE);
+        if (response == 0) {
+            restartGame();
+        } else {
+            exitGame();
+        }
     }
 
     private static void gameOver() {
-        JOptionPane.showMessageDialog(frame, "Game Over! No more moves left.", "Game Over", JOptionPane.ERROR_MESSAGE);
-        // TODO: restart game and exit
+        int response = UIConstruct.alert(frame, "Game Over", "No more moves left. Restart?", JOptionPane.ERROR_MESSAGE);
+        if (response == 0) {
+            restartGame();
+        } else {
+            exitGame();
+        }
+    }
+
+    private static void restartGame() {
+        frame.getContentPane().removeAll();
+        frame.dispose();
+
+        Game game = new Game();
+        game.initialize();
+    }
+
+    private static void exitGame() {
+        System.exit(0);
     }
 }
 
