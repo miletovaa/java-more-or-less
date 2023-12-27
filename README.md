@@ -35,29 +35,29 @@ exceeds 0.
 
 ## Tasks:
 
-• Develop a user interface for playing with a new field layout for each game, with a
+- [ ] Develop a user interface for playing with a new field layout for each game, with a
 basic field size 10 × 10 (n = 10). (50 points)
 
-• Create a user interface that saves the game field to a file, allowing the choice of a
+- [ ] Create a user interface that saves the game field to a file, allowing the choice of a
 field layout from the file during play. (15 points)
 
-• Implement a game control menu (restart, set field size, set number of moves, set
+- [ ] Implement a game control menu (restart, set field size, set number of moves, set
 target value). (10 points)
 
-• Enhance the game control menu with difficulty options (easy, medium, hard), affec-
+- [ ] Enhance the game control menu with difficulty options (easy, medium, hard), affec-
 ting the target value and the number of moves. (10 points)
 
-• Display the deviation from the final value in the graphical user interface when the
+- [ ] Display the deviation from the final value in the graphical user interface when the
 move counter reaches zero (solution quality). (5 points)
 
-• Allow the game to detect when there is no possible continuation. (10 points)
+- [ ] Allow the game to detect when there is no possible continuation. (10 points)
 
 ## Additional points (for over 100%):
 
-• UI (User Interface) assists the user in choosing button B in Playing step 1 by showing
+- [ ] UI (User Interface) assists the user in choosing button B in Playing step 1 by showing
 the new value if the user selected a possible button B. (10 points)
 
-• Add an option for the UI to suggest a good move for button B in Playing step 1 to
+- [ ] Add an option for the UI to suggest a good move for button B in Playing step 1 to
 help the user approach the target value. (5 points)
 
 
