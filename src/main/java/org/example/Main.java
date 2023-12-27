@@ -22,19 +22,16 @@ class Button {
 
 class ButtonClickListener implements ActionListener {
     private final String value;
-    private final int i; // column
-    private final int j; // row
 
-    public ButtonClickListener(String value, int i, int j) {
+    public ButtonClickListener(String value) {
         this.value = value;
-        this.i = i;
-        this.j = j;
     }
 
     @Override
     public void actionPerformed(ActionEvent e) {
-        // TODO: process button click
-        System.out.print("clicked button " + value + " (" + i + ";" + j + ")\n");
+        Game.movesLeft -= 1;
+        Game.currentSum += Integer.parseInt(value);
+        Game.move();
     }
 }
 
@@ -47,6 +44,10 @@ class Label {
         this.j = j;
         this.title = title;
         this.value = value;
+        updateLabel();
+    }
+
+    public void updateLabel() {
         this.j.setText(title + ": " + value);
     }
 }
@@ -62,12 +63,18 @@ class UIConstruct {
 }
 
 class Game {
-    private final JFrame frame;
+    private static JFrame frame;
     private final Button[][] buttons;
+    public static int movesLeft;
+    public static int currentSum;
+
+    private static Label sumValueLabel;
+    private static Label movesLeftLabel;
 
     // Game settings
     private static final int N = 10; // N*N is a field size
-    private static final int totalMoves = 10;
+    private static final int totalMoves = 3;
+    private static final int targetValue = 100;
 
     // UI settings
     private static final int BUTTON_SIZE = 50; // width and height of the buttons
@@ -82,6 +89,9 @@ class Game {
     public void initialize() {
         Random random = new Random();
 
+        movesLeft = totalMoves;
+        currentSum = 0;
+
         // coordinates
         int x = PADDING; int y = PADDING * 2;
 
@@ -89,10 +99,7 @@ class Game {
         int frameHeight = N * BUTTON_SIZE +  PADDING * 4;
 
         // add target value label
-        int targetValue = 100;
-        Label targetValueLabel = UIConstruct.createLabel(frame, "Target value", targetValue, PADDING, PADDING);
-
-        int sumOnBtn = 0; // current sum of numbers on the buttons
+        UIConstruct.createLabel(frame, "Target value", targetValue, PADDING, PADDING);
 
         // add buttons on the field
         for (int i = 0; i < N; i++) {
@@ -100,7 +107,7 @@ class Game {
                 int randomDigit = random.nextInt(9) + 1;
                 buttons[i][j] = new Button(new JButton(Integer.toString(randomDigit)));
                 buttons[i][j].j.setBounds(x, y, BUTTON_SIZE, BUTTON_SIZE);
-                buttons[i][j].j.addActionListener(new ButtonClickListener(buttons[i][j].value, i, j));
+                buttons[i][j].j.addActionListener(new ButtonClickListener(buttons[i][j].value));
                 frame.add(buttons[i][j].j);
                 x += BUTTON_SIZE;
             }
@@ -109,14 +116,31 @@ class Game {
         }
 
         // add summary of the button values label
-        Label sumValueLabel = UIConstruct.createLabel(frame, "SUM", sumOnBtn, PADDING, frameHeight - PADDING - 20);
+        sumValueLabel = UIConstruct.createLabel(frame, "SUM", currentSum, PADDING, frameHeight - PADDING - 20);
 
         // add number of moves left label
-        Label movesLeftLabel = UIConstruct.createLabel(frame, "Moves left", totalMoves, frameWidth - 130, PADDING);
+        movesLeftLabel = UIConstruct.createLabel(frame, "Moves left", totalMoves, frameWidth - 130, PADDING);
 
         frame.setSize(frameWidth, frameHeight);
         frame.setLayout(null);
         frame.setVisible(true);
+    }
+
+    public static void move() {
+        sumValueLabel.value = currentSum;
+        movesLeftLabel.value = movesLeft;
+
+        sumValueLabel.updateLabel();
+        movesLeftLabel.updateLabel();
+
+        // TODO: add game logic
+
+        if (movesLeft == 0) gameOver();
+    }
+
+    private static void gameOver() {
+        JOptionPane.showMessageDialog(frame, "Game Over! No more moves left.", "Game Over", JOptionPane.ERROR_MESSAGE);
+        // TODO: restart game and exit
     }
 }
 
