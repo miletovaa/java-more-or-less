@@ -50,8 +50,14 @@ class MenuListener implements ActionListener {
 
     @Override
     public void actionPerformed(ActionEvent e) {
-        if (option == 0) {
-            Game.restartGame();
+        switch (option){
+            case 0:
+                Game.restartGame();
+                break;
+            case 1:
+                Game.Settings.manualSettings = new Game.Settings.ManualSettings(Game.frame);
+                Game.Settings.manualSettings.setVisible(true);
+                break;
         }
     }
 }
@@ -75,10 +81,16 @@ class Label {
 
 class UIConstruct {
     public static void createMenu(JFrame frame) {
-        JMenuBar mb=new JMenuBar();
+        JMenuBar mb = new JMenuBar();
+
         JMenuItem restartItem = new JMenuItem("Restart");
         mb.add(restartItem);
         restartItem.addActionListener(new MenuListener(0));
+
+        JMenuItem settingsItem = new JMenuItem("Manual settings");
+        mb.add(settingsItem);
+        settingsItem.addActionListener(new MenuListener(1));
+
         frame.setJMenuBar(mb);
     }
 
@@ -106,7 +118,7 @@ class UIConstruct {
 }
 
 class Game {
-    private static JFrame frame;
+    static JFrame frame;
     private static Button[][] buttons;
     public static int movesLeft;
     public static int currentSum;
@@ -117,9 +129,9 @@ class Game {
     private static Label movesLeftLabel;
 
     // Game settings
-    private static final int N = 10; // N*N is a field size
-    private static final int totalMoves = 10;
-    private static final int targetValue = 20;
+    private static int N = 10; // N*N is a field size
+    private static int totalMoves = 10;
+    private static int targetValue = 20;
 
     // UI settings
     private static final int BUTTON_SIZE = 50; // width and height of the buttons
@@ -231,6 +243,62 @@ class Game {
 
     private static void exitGame() {
         System.exit(0);
+    }
+
+    static class Settings {
+        static ManualSettings manualSettings;
+
+        static class ManualSettings extends JDialog {
+            JTextField fieldSizeField;
+            JTextField movesField;
+            JTextField targetValueField;
+            JButton applyBtn;
+
+            public ManualSettings(JFrame parent) {
+                super(parent, "Manual Settings", true);
+                setLayout(new FlowLayout());
+
+                add(new JLabel("Field Size:"));
+                fieldSizeField = new JTextField(Integer.toString(N), 10);
+                add(fieldSizeField);
+
+                add(new JLabel("Number of Moves:"));
+                movesField = new JTextField(Integer.toString(totalMoves), 10);
+                add(movesField);
+
+                add(new JLabel("Target Value:"));
+                targetValueField = new JTextField(Integer.toString(targetValue), 10);
+                add(targetValueField);
+
+                add(new JLabel(""));
+                applyBtn = new JButton("Apply");
+                add(applyBtn);
+
+                applyBtn.addActionListener(new ActionListener() {
+                    @Override
+                    public void actionPerformed(ActionEvent e) {
+                        applySettings();
+                    }
+                });
+
+                setSize(300,300);
+                setLocationRelativeTo(parent);
+            }
+
+            private void applySettings() {
+                try {
+                    N = Integer.parseInt(fieldSizeField.getText());
+                    totalMoves = Integer.parseInt(movesField.getText());
+                    targetValue = Integer.parseInt(targetValueField.getText());
+
+                    restartGame();
+
+                    setVisible(false);
+                } catch (NumberFormatException ex) {
+                    JOptionPane.showMessageDialog(this, "Invalid input. Please enter numeric values.", "Error", JOptionPane.ERROR_MESSAGE);
+                }
+            }
+        }
     }
 }
 
