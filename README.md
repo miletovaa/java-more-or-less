@@ -38,10 +38,10 @@ basic field size 10 × 10 (n = 10). (50 points)
 - [ ] Create a user interface that saves the game field to a file, allowing the choice of a
 field layout from the file during play. (15 points)
 
-- [ ] Implement a game control menu (restart, set field size, set number of moves, set
+- [x] Implement a game control menu (restart, set field size, set number of moves, set
 target value). (10 points)
 
-- [ ] Enhance the game control menu with difficulty options (easy, medium, hard), affecting the target value and the number of moves. (10 points)
+- [x] Enhance the game control menu with difficulty options (easy, medium, hard), affecting the target value and the number of moves. (10 points)
 
 - [ ] Display the deviation from the final value in the graphical user interface when the
 move counter reaches zero (solution quality). (5 points)

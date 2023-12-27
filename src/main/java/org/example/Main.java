@@ -58,6 +58,15 @@ class MenuListener implements ActionListener {
                 Game.Settings.manualSettings = new Game.Settings.ManualSettings(Game.frame);
                 Game.Settings.manualSettings.setVisible(true);
                 break;
+            case 2:
+                Game.Settings.setEasyMode();
+                break;
+            case 3:
+                Game.Settings.setMediumMode();
+                break;
+            case 4:
+                Game.Settings.setHardMode();
+                break;
         }
     }
 }
@@ -90,6 +99,16 @@ class UIConstruct {
         JMenuItem settingsItem = new JMenuItem("Manual settings");
         mb.add(settingsItem);
         settingsItem.addActionListener(new MenuListener(1));
+
+        JMenu modeSubmenu = new JMenu("Difficulty");
+        JMenuItem easyItem = new JMenuItem("Easy");
+        easyItem.addActionListener(new MenuListener(2));
+        JMenuItem mediumItem = new JMenuItem("Medium");
+        mediumItem.addActionListener(new MenuListener(3));
+        JMenuItem hardItem = new JMenuItem("Hard");
+        hardItem.addActionListener(new MenuListener(4));
+        modeSubmenu.add(easyItem); modeSubmenu.add(mediumItem); modeSubmenu.add(hardItem);
+        mb.add(modeSubmenu);
 
         frame.setJMenuBar(mb);
     }
@@ -128,11 +147,6 @@ class Game {
     private static Label sumValueLabel;
     private static Label movesLeftLabel;
 
-    // Game settings
-    private static int N = 10; // N*N is a field size
-    private static int totalMoves = 10;
-    private static int targetValue = 20;
-
     // UI settings
     private static final int BUTTON_SIZE = 50; // width and height of the buttons
     private static final int PADDING = 30; // frame paddings
@@ -140,30 +154,30 @@ class Game {
     public Game() {
         String TITLE = "More or less, less is more";
         frame = new JFrame(TITLE);
-        buttons = new Button[N][N];
+        buttons = new Button[Settings.N][Settings.N];
         Previous = 0;
     }
 
     public void initialize() {
         Random random = new Random();
 
-        movesLeft = totalMoves;
+        movesLeft = Settings.totalMoves;
         currentSum = 0;
 
         // coordinates
         int x = PADDING; int y = PADDING * 2;
 
-        int frameWidth = N * BUTTON_SIZE + PADDING * 2;
-        int frameHeight = N * BUTTON_SIZE +  PADDING * 4;
+        int frameWidth = Settings.N * BUTTON_SIZE + PADDING * 2;
+        int frameHeight = Settings.N * BUTTON_SIZE +  PADDING * 4;
 
         UIConstruct.createMenu(frame);
 
         // add target value label
-        UIConstruct.createLabel(frame, "Target value", targetValue, PADDING, PADDING);
+        UIConstruct.createLabel(frame, "Target value", Settings.targetValue, PADDING, PADDING);
 
         // add buttons on the field
-        for (int i = 0; i < N; i++) {
-            for (int j = 0; j < N; j++) {
+        for (int i = 0; i < Settings.N; i++) {
+            for (int j = 0; j < Settings.N; j++) {
                 int randomDigit = random.nextInt(9) + 1;
                 buttons[i][j] = new Button(Integer.toString(randomDigit));
                 buttons[i][j].setBounds(x, y, BUTTON_SIZE, BUTTON_SIZE);
@@ -179,7 +193,7 @@ class Game {
         sumValueLabel = UIConstruct.createLabel(frame, "SUM", currentSum, PADDING, frameHeight - PADDING - 20);
 
         // add number of moves left label
-        movesLeftLabel = UIConstruct.createLabel(frame, "Moves left", totalMoves, frameWidth - 130, PADDING);
+        movesLeftLabel = UIConstruct.createLabel(frame, "Moves left", Settings.totalMoves, frameWidth - 130, PADDING);
 
         frame.setSize(frameWidth, frameHeight);
         frame.setLayout(null);
@@ -187,8 +201,8 @@ class Game {
     }
 
     public static void fieldValidation() {
-        for (int i = 0; i < N; i++) {
-            for (int j = 0; j < N; j++) {
+        for (int i = 0; i < Settings.N; i++) {
+            for (int j = 0; j < Settings.N; j++) {
                 buttons[i][j].setEnabled(true);
                 int col = i + 1; int row = j + 1;
                 if (Previous == 0) {
@@ -208,7 +222,7 @@ class Game {
         sumValueLabel.updateLabel();
         movesLeftLabel.updateLabel();
 
-        if (currentSum >= targetValue) win();
+        if (currentSum >= Settings.targetValue) win();
         else {
             if (movesLeft == 0) gameOver();
             fieldValidation();
@@ -246,6 +260,12 @@ class Game {
     }
 
     static class Settings {
+
+        // Game settings
+        private static int N = 10; // N*N is a field size
+        private static int totalMoves = 10;
+        private static int targetValue = 20;
+
         static ManualSettings manualSettings;
 
         static class ManualSettings extends JDialog {
@@ -277,27 +297,43 @@ class Game {
                 applyBtn.addActionListener(new ActionListener() {
                     @Override
                     public void actionPerformed(ActionEvent e) {
-                        applySettings();
+                        try {
+                            int fields = Integer.parseInt(fieldSizeField.getText());
+                            int moves = Integer.parseInt(movesField.getText());
+                            int target = Integer.parseInt(targetValueField.getText());
+
+                            applySettings(fields, moves, target);
+
+                            setVisible(false);
+                        } catch (NumberFormatException ex) {
+                            JOptionPane.showMessageDialog(getParent(), "Invalid input. Please enter numeric values.", "Error", JOptionPane.ERROR_MESSAGE);
+                        }
                     }
                 });
 
                 setSize(300,300);
                 setLocationRelativeTo(parent);
             }
+        }
 
-            private void applySettings() {
-                try {
-                    N = Integer.parseInt(fieldSizeField.getText());
-                    totalMoves = Integer.parseInt(movesField.getText());
-                    targetValue = Integer.parseInt(targetValueField.getText());
+        public static void setEasyMode() {
+            applySettings(10, 15, 20);
+        }
 
-                    restartGame();
+        public static void setMediumMode() {
+            applySettings(10, 12, 25);
+        }
 
-                    setVisible(false);
-                } catch (NumberFormatException ex) {
-                    JOptionPane.showMessageDialog(this, "Invalid input. Please enter numeric values.", "Error", JOptionPane.ERROR_MESSAGE);
-                }
-            }
+        public static void setHardMode() {
+            applySettings(10, 10, 30);
+        }
+
+        private static void applySettings(int fields, int moves, int target) {
+            N = fields;
+            totalMoves = moves;
+            targetValue = target;
+
+            restartGame();
         }
     }
 }
