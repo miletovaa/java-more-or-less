@@ -35,7 +35,7 @@ exceeds 0.
 - [x] Develop a user interface for playing with a new field layout for each game, with a
 basic field size 10 × 10 (n = 10). (50 points)
 
-- [ ] Create a user interface that saves the game field to a file, allowing the choice of a
+- [x] Create a user interface that saves the game field to a file, allowing the choice of a
 field layout from the file during play. (15 points)
 
 - [x] Implement a game control menu (restart, set field size, set number of moves, set

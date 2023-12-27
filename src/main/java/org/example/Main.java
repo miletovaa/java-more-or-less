@@ -5,6 +5,12 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.Random;
+import java.io.BufferedWriter;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.BufferedReader;
+import java.io.FileReader;
+import java.util.StringTokenizer;
 
 class Button extends JButton {
     private static final Color activeBtn = new Color(98, 240, 150);
@@ -67,6 +73,12 @@ class MenuListener implements ActionListener {
             case 4:
                 Game.Settings.setHardMode();
                 break;
+            case 5:
+                Game.exportLayout();
+                break;
+            case 6:
+                Game.importLayout();
+                break;
         }
     }
 }
@@ -109,6 +121,15 @@ class UIConstruct {
         hardItem.addActionListener(new MenuListener(4));
         modeSubmenu.add(easyItem); modeSubmenu.add(mediumItem); modeSubmenu.add(hardItem);
         mb.add(modeSubmenu);
+
+        JMenu layoutSubmenu = new JMenu("Layout");
+        JMenuItem exportItem = new JMenuItem("Export");
+        exportItem.addActionListener(new MenuListener(5));
+        layoutSubmenu.add(exportItem);
+        JMenuItem importItem = new JMenuItem("Import");
+        importItem.addActionListener(new MenuListener(6));
+        layoutSubmenu.add(importItem);
+        mb.add(layoutSubmenu);
 
         frame.setJMenuBar(mb);
     }
@@ -158,14 +179,11 @@ class Game {
         Previous = 0;
     }
 
-    public void initialize() {
+    public static void initialize(boolean setRandomly) {
         Random random = new Random();
 
         movesLeft = Settings.totalMoves;
         currentSum = 0;
-
-        // coordinates
-        int x = PADDING; int y = PADDING * 2;
 
         int frameWidth = Settings.N * BUTTON_SIZE + PADDING * 2;
         int frameHeight = Settings.N * BUTTON_SIZE +  PADDING * 4;
@@ -176,17 +194,13 @@ class Game {
         UIConstruct.createLabel(frame, "Target value", Settings.targetValue, PADDING, PADDING);
 
         // add buttons on the field
-        for (int i = 0; i < Settings.N; i++) {
-            for (int j = 0; j < Settings.N; j++) {
-                int randomDigit = random.nextInt(9) + 1;
-                buttons[i][j] = new Button(Integer.toString(randomDigit));
-                buttons[i][j].setBounds(x, y, BUTTON_SIZE, BUTTON_SIZE);
-                buttons[i][j].addActionListener(new ButtonClickListener(buttons[i][j]));
-                frame.add(buttons[i][j]);
-                x += BUTTON_SIZE;
+        if (setRandomly) {
+            for (int i = 0; i < Settings.N; i++) {
+                for (int j = 0; j < Settings.N; j++) {
+                    int randomDigit = random.nextInt(9) + 1;
+                    addButtonOnField(j, i, Integer.toString(randomDigit));
+                }
             }
-            y += BUTTON_SIZE;
-            x = PADDING;
         }
 
         // add summary of the button values label
@@ -198,6 +212,15 @@ class Game {
         frame.setSize(frameWidth, frameHeight);
         frame.setLayout(null);
         frame.setVisible(true);
+    }
+
+    private static void addButtonOnField(int col, int row, String value) {
+        buttons[row][col] = new Button(value);
+        int x = PADDING + (col * BUTTON_SIZE);
+        int y = PADDING * 2 + (row * BUTTON_SIZE);
+        buttons[row][col].setBounds(x, y, BUTTON_SIZE, BUTTON_SIZE);
+        buttons[row][col].addActionListener(new ButtonClickListener(buttons[row][col]));
+        frame.add(buttons[row][col]);
     }
 
     public static void fieldValidation() {
@@ -251,8 +274,7 @@ class Game {
         frame.getContentPane().removeAll();
         frame.dispose();
 
-        Game game = new Game();
-        game.initialize();
+        initialize(true);
     }
 
     private static void exitGame() {
@@ -336,11 +358,69 @@ class Game {
             restartGame();
         }
     }
+
+    public static void exportLayout() {
+        JFileChooser fileChooser = new JFileChooser();
+        int exp = fileChooser.showSaveDialog(frame);
+
+        if (exp == JFileChooser.APPROVE_OPTION) {
+            String path = fileChooser.getSelectedFile().getAbsolutePath() + ".txt";
+
+            try (BufferedWriter writer = new BufferedWriter(new FileWriter(path))) {
+                writer.write(Settings.N + " | " +  Settings.totalMoves + " | " + Settings.targetValue);
+                writer.newLine();
+                for (int i = 0; i < Settings.N; i++) {
+                    for (int j = 0; j < Settings.N; j++) {
+                        writer.write(buttons[i][j].getText() + " ");
+                    }
+                    writer.newLine();
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    public static void importLayout() {
+        JFileChooser fileChooser = new JFileChooser();
+        int imp = fileChooser.showSaveDialog(frame);
+
+        if (imp == JFileChooser.APPROVE_OPTION) {
+            String path = fileChooser.getSelectedFile().getAbsolutePath();
+
+            try (BufferedReader reader = new BufferedReader(new FileReader(path))) {
+                frame.getContentPane().removeAll();
+                frame.dispose();
+
+                initialize(false);
+
+                String firstLine = reader.readLine();
+                StringTokenizer firstLineTokens = new StringTokenizer(firstLine, "|");
+                Settings.N = Integer.parseInt(firstLineTokens.nextToken().trim());
+                Settings.totalMoves = Integer.parseInt(firstLineTokens.nextToken().trim());
+                Settings.targetValue = Integer.parseInt(firstLineTokens.nextToken().trim());
+
+                for (int i = 0; i < Settings.N; i++) {
+                    String line = reader.readLine();
+                    StringTokenizer lineTokens = new StringTokenizer(line, " ");
+                    for (int j = 0; j < Settings.N; j++) {
+                        String value = lineTokens.nextToken().trim();
+                        addButtonOnField(j, i, value);
+                    }
+                    System.out.println();
+                }
+
+            } catch (IOException | NumberFormatException e) {
+                e.printStackTrace();
+                JOptionPane.showMessageDialog(frame, "Error reading the file", "Error", JOptionPane.ERROR_MESSAGE);
+            }
+        }
+    }
 }
 
 public class Main {
     public static void main(String[] args) {
-        Game game = new Game();
-        game.initialize();
+        new Game();
+        Game.initialize(true);
     }
 }
