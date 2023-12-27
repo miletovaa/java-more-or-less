@@ -41,6 +41,21 @@ class ButtonClickListener implements ActionListener {
     }
 }
 
+class MenuListener implements ActionListener {
+    private final int option;
+
+    public MenuListener(int option) {
+        this.option = option;
+    }
+
+    @Override
+    public void actionPerformed(ActionEvent e) {
+        if (option == 0) {
+            Game.restartGame();
+        }
+    }
+}
+
 class Label {
     JLabel j;
     String title;
@@ -59,6 +74,14 @@ class Label {
 }
 
 class UIConstruct {
+    public static void createMenu(JFrame frame) {
+        JMenuBar mb=new JMenuBar();
+        JMenuItem restartItem = new JMenuItem("Restart");
+        mb.add(restartItem);
+        restartItem.addActionListener(new MenuListener(0));
+        frame.setJMenuBar(mb);
+    }
+
     public static int alert(JFrame frame, String title, String message, int messageType) {
         Object[] options = { "Restart", "Exit" };
         return JOptionPane.showOptionDialog(
@@ -120,6 +143,8 @@ class Game {
 
         int frameWidth = N * BUTTON_SIZE + PADDING * 2;
         int frameHeight = N * BUTTON_SIZE +  PADDING * 4;
+
+        UIConstruct.createMenu(frame);
 
         // add target value label
         UIConstruct.createLabel(frame, "Target value", targetValue, PADDING, PADDING);
@@ -196,7 +221,7 @@ class Game {
         }
     }
 
-    private static void restartGame() {
+    public static void restartGame() {
         frame.getContentPane().removeAll();
         frame.dispose();
 
