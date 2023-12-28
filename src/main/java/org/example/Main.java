@@ -262,7 +262,8 @@ class Game {
     }
 
     private static void gameOver() {
-        int response = UIConstruct.alert(frame, "Game Over", "No more moves left. Restart?", JOptionPane.ERROR_MESSAGE);
+        int deviation = Settings.targetValue - currentSum;
+        int response = UIConstruct.alert(frame, "Game Over", "No more moves left. Deviation: " + deviation + ". Restart?", JOptionPane.ERROR_MESSAGE);
         if (response == 0) {
             restartGame();
         } else {
@@ -285,7 +286,7 @@ class Game {
 
         // Game settings
         private static int N = 10; // N*N is a field size
-        private static int totalMoves = 10;
+        private static int totalMoves = 3;
         private static int targetValue = 20;
 
         static ManualSettings manualSettings;

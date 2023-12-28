@@ -43,7 +43,7 @@ target value). (10 points)
 
 - [x] Enhance the game control menu with difficulty options (easy, medium, hard), affecting the target value and the number of moves. (10 points)
 
-- [ ] Display the deviation from the final value in the graphical user interface when the
+- [x] Display the deviation from the final value in the graphical user interface when the
 move counter reaches zero (solution quality). (5 points)
 
 - [ ] Allow the game to detect when there is no possible continuation. (10 points)
