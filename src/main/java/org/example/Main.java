@@ -4,12 +4,14 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.HashSet;
 import java.util.Random;
 import java.io.BufferedWriter;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.BufferedReader;
 import java.io.FileReader;
+import java.util.Set;
 import java.util.StringTokenizer;
 
 class Button extends JButton {
@@ -176,42 +178,39 @@ class Game {
         String TITLE = "More or less, less is more";
         frame = new JFrame(TITLE);
         buttons = new Button[Settings.N][Settings.N];
-        Previous = 0;
     }
 
     public static void initialize(boolean setRandomly) {
-        Random random = new Random();
-
-        movesLeft = Settings.totalMoves;
+        Previous = 0;
         currentSum = 0;
+        movesLeft = Settings.totalMoves;
 
         int frameWidth = Settings.N * BUTTON_SIZE + PADDING * 2;
         int frameHeight = Settings.N * BUTTON_SIZE +  PADDING * 4;
 
         UIConstruct.createMenu(frame);
-
-        // add target value label
         UIConstruct.createLabel(frame, "Target value", Settings.targetValue, PADDING, PADDING);
+        sumValueLabel = UIConstruct.createLabel(frame, "SUM", currentSum, PADDING, frameHeight - PADDING - 20);
+        movesLeftLabel = UIConstruct.createLabel(frame, "Moves left", Settings.totalMoves, frameWidth - 130, PADDING);
 
         // add buttons on the field
         if (setRandomly) {
-            for (int i = 0; i < Settings.N; i++) {
-                for (int j = 0; j < Settings.N; j++) {
-                    int randomDigit = random.nextInt(9) + 1;
-                    addButtonOnField(j, i, Integer.toString(randomDigit));
-                }
-            }
+            initializeButtonsRandomly();
         }
-
-        // add summary of the button values label
-        sumValueLabel = UIConstruct.createLabel(frame, "SUM", currentSum, PADDING, frameHeight - PADDING - 20);
-
-        // add number of moves left label
-        movesLeftLabel = UIConstruct.createLabel(frame, "Moves left", Settings.totalMoves, frameWidth - 130, PADDING);
 
         frame.setSize(frameWidth, frameHeight);
         frame.setLayout(null);
         frame.setVisible(true);
+    }
+
+    public static void initializeButtonsRandomly() {
+        Random random = new Random();
+        for (int i = 0; i < Settings.N; i++) {
+            for (int j = 0; j < Settings.N; j++) {
+                int randomDigit = random.nextInt(9) + 1;
+                addButtonOnField(j, i, Integer.toString(randomDigit));
+            }
+        }
     }
 
     private static void addButtonOnField(int col, int row, String value) {
@@ -224,17 +223,40 @@ class Game {
     }
 
     public static void fieldValidation() {
+        Set<String> possibleMoves = new HashSet<>();
+
         for (int i = 0; i < Settings.N; i++) {
             for (int j = 0; j < Settings.N; j++) {
                 buttons[i][j].setEnabled(true);
                 int col = i + 1; int row = j + 1;
                 if (Previous == 0) {
-                    buttons[i][j].setEnabled(col % Current == 0 || row % Current == 0);
+                    if (col % Current == 0 || row % Current == 0) {
+                        possibleMoves.add(buttons[i][j].getText());
+                    } else {
+                        buttons[i][j].setEnabled(false);
+                    }
                 } else {
-                    buttons[i][j].setEnabled((col % Current == 0 && col % Previous == 0) || (row % Current == 0 && row % Previous == 0));
+                    if ((col % Current == 0 && col % Previous == 0) || (row % Current == 0 && row % Previous == 0)) {
+                        possibleMoves.add(buttons[i][j].getText());
+                    } else {
+                        buttons[i][j].setEnabled(false);
+                    }
                 }
             }
         }
+
+        int maxNextStep = 0;
+        for (String element : possibleMoves) {
+            maxNextStep = Integer.parseInt(element);
+        }
+
+        if (
+            maxNextStep == 0 ||
+            (maxNextStep + currentSum < Settings.targetValue && movesLeft == 1)
+        ) {
+            gameOver();
+        }
+
         Previous = Current;
     }
 
@@ -281,16 +303,12 @@ class Game {
     private static void exitGame() {
         System.exit(0);
     }
-
     static class Settings {
-
         // Game settings
         private static int N = 10; // N*N is a field size
-        private static int totalMoves = 3;
+        private static int totalMoves = 10;
         private static int targetValue = 20;
-
         static ManualSettings manualSettings;
-
         static class ManualSettings extends JDialog {
             JTextField fieldSizeField;
             JTextField movesField;
