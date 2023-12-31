@@ -4,106 +4,242 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.io.*;
 import java.util.HashSet;
 import java.util.Random;
-import java.io.BufferedWriter;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.io.BufferedReader;
-import java.io.FileReader;
 import java.util.Set;
 import java.util.StringTokenizer;
 
-class Button extends JButton {
-    private static final Color activeBtn = new Color(98, 240, 150);
-    private static final Color inactiveBtn = new Color(209, 209, 209);
+class UIController {
+    JFrame frame;
+    private Button[][] buttons;
+    String TITLE = "More or less, less is more";
+    int BUTTON_SIZE = 50; // width and height of the buttons
+    int PADDING = 30; // frame paddings
 
-    public Button(String text) {
-        super(text);
-        this.setEnabled(true);
+    public Label sumValueLabel;
+    public Label movesLeftLabel;
+
+    public UIController() {
+        frame = new JFrame(TITLE);
+        int frameWidth = 300;
+        int frameHeight = 300;
+
+        frame.setSize(frameWidth, frameHeight);
+        frame.setLayout(null);
+        frame.setVisible(true);
+
+        JLabel lobbyLabel = new JLabel(TITLE);
+        lobbyLabel.setBounds(60, 50, 200, 40);
+        frame.add(lobbyLabel);
+
+        JButton btnStartGame = new JButton("Start new game");
+        btnStartGame.setBounds(50, 100, 200, 40);
+        btnStartGame.addActionListener(new ButtonLobbyListener(true));
+        btnStartGame.setBackground(new Color(153, 253, 255));
+        frame.add(btnStartGame);
+
+        JButton btnImportGame = new JButton("Import game");
+        btnImportGame.setBounds(50, 150, 200, 40);
+        btnImportGame.addActionListener(new ButtonLobbyListener(false));
+        btnImportGame.setBackground(new Color(153, 253, 255));
+        frame.add(btnImportGame);
     }
 
-    @Override
-    public void setEnabled(boolean enabled) {
-        super.setEnabled(enabled);
-        setBackground(enabled ? activeBtn : inactiveBtn);
-    }
-}
-
-class ButtonClickListener implements ActionListener {
-    private final JButton btn;
-    private final int value;
-
-    public ButtonClickListener(JButton btn) {
-        this.btn = btn;
-        this.value = Integer.parseInt(btn.getText());
-    }
-
-    @Override
-    public void actionPerformed(ActionEvent e) {
-        Game.movesLeft -= 1;
-        Game.currentSum += value;
-        Game.Current = value;
-        Game.move();
-        btn.setEnabled(false);
-    }
-}
-
-class MenuListener implements ActionListener {
-    private final int option;
-
-    public MenuListener(int option) {
-        this.option = option;
-    }
-
-    @Override
-    public void actionPerformed(ActionEvent e) {
-        switch (option){
-            case 0:
-                Game.restartGame();
-                break;
-            case 1:
-                Game.Settings.manualSettings = new Game.Settings.ManualSettings(Game.frame);
-                Game.Settings.manualSettings.setVisible(true);
-                break;
-            case 2:
-                Game.Settings.setEasyMode();
-                break;
-            case 3:
-                Game.Settings.setMediumMode();
-                break;
-            case 4:
-                Game.Settings.setHardMode();
-                break;
-            case 5:
-                Game.exportLayout();
-                break;
-            case 6:
-                Game.importLayout();
-                break;
+    private class ButtonLobbyListener implements ActionListener {
+        private boolean isRandomLayout;
+        private ButtonLobbyListener(boolean isRandomLayout) {
+            this.isRandomLayout = isRandomLayout;
+        }
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            if (isRandomLayout) {
+                startNewGame();
+            } else {
+//                importGame();
+            }
         }
     }
-}
 
-class Label {
-    JLabel j;
-    String title;
-    int value;
+    class MenuListener implements ActionListener {
+        private final int option;
 
-    public Label(JLabel j, String title, int value) {
-        this.j = j;
-        this.title = title;
-        this.value = value;
-        updateLabel();
+        public MenuListener(int option) {
+            this.option = option;
+        }
+
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            switch (option){
+                case 0:
+//                    Game.restartGame();
+                    break;
+                case 1:
+//                    Game.Settings.manualSettings = new Game.Settings.ManualSettings(Game.frame);
+//                    Game.Settings.manualSettings.setVisible(true);
+                    break;
+                case 2:
+//                    Game.Settings.setEasyMode();
+                    break;
+                case 3:
+//                    Game.Settings.setMediumMode();
+                    break;
+                case 4:
+//                    Game.Settings.setHardMode();
+                    break;
+                case 5:
+//                    Game.exportLayout();
+                    break;
+                case 6:
+//                    Game.importLayout();
+                    break;
+            }
+        }
     }
 
-    public void updateLabel() {
-        this.j.setText(title + ": " + value);
+    private void startNewGame() {
+        TRUEgay truegay = new TRUEgay(this);
+        renderGameField(truegay, true);
     }
-}
 
-class UIConstruct {
-    public static void createMenu(JFrame frame) {
+    private void renderGameField(TRUEgay gameInstance, boolean isRandomLayout) {
+        int frameWidth = gameInstance.settings.getGameFieldSize() * BUTTON_SIZE + PADDING * 2;
+        int frameHeight = gameInstance.settings.getGameFieldSize() * BUTTON_SIZE +  PADDING * 4;
+
+        frame.getContentPane().removeAll();
+
+        frame.setSize(frameWidth, frameHeight);
+        frame.setLayout(null);
+        frame.setVisible(true);
+
+        createMenu();
+        createLabel("Target value", gameInstance.settings.getTargetValue(), PADDING, PADDING);
+        sumValueLabel = createLabel("SUM", 0, PADDING, frameHeight - PADDING - 20);
+        movesLeftLabel = createLabel("Moves left", gameInstance.settings.getTotalMoves(),frameWidth - 130, PADDING);
+
+        buttons = new Button[gameInstance.settings.getGameFieldSize()][gameInstance.settings.getGameFieldSize()];
+        renderGrid(isRandomLayout, gameInstance);
+    }
+
+    private void renderGrid(boolean isRandomLayout, TRUEgay gameInstance) {
+        if (isRandomLayout) {
+            Random random = new Random();
+            for (int i = 0; i < gameInstance.settings.getGameFieldSize(); i++) {
+                for (int j = 0; j < gameInstance.settings.getGameFieldSize(); j++) {
+                    int randomDigit = random.nextInt(9) + 1;
+                    addButtonOnField(j, i, Integer.toString(randomDigit), gameInstance);
+                }
+            }
+        }
+    }
+
+    private void addButtonOnField(int col, int row, String value, TRUEgay gameInstance) {
+        Button button = new Button(value);
+        int x = PADDING + (col * BUTTON_SIZE);
+        int y = PADDING * 2 + (row * BUTTON_SIZE);
+        button.setBounds(x, y, BUTTON_SIZE, BUTTON_SIZE);
+        button.addActionListener(new ButtonGridListener(button, gameInstance));
+        frame.add(button);
+        buttons[row][col] = button;
+    }
+
+    public void gridRerenderOnMove(TRUEgay gameInstance) {
+        Set<String> possibleMoves = new HashSet<>();
+
+        int current = gameInstance.getCurrentSelectedValue();
+        int previous = gameInstance.getPreviousSelectedValue();
+
+        for (int i = 0; i < gameInstance.settings.getGameFieldSize(); i++) {
+            for (int j = 0; j < gameInstance.settings.getGameFieldSize(); j++) {
+                buttons[i][j].setEnabled(true);
+                int col = i + 1; int row = j + 1;
+                if (previous == 0) {
+                    if (col % current == 0 || row % current == 0) {
+                        possibleMoves.add(buttons[i][j].getText());
+                    } else {
+                        buttons[i][j].setEnabled(false);
+                    }
+                } else {
+                    if ((col % current == 0 && col % previous == 0) || (row % current == 0 && row % previous == 0)) {
+                        possibleMoves.add(buttons[i][j].getText());
+                    } else {
+                        buttons[i][j].setEnabled(false);
+                    }
+                }
+            }
+        }
+
+        int maxNextStep = 0;
+        for (String element : possibleMoves) {
+            maxNextStep = Integer.parseInt(element);
+        }
+
+        if (
+                maxNextStep == 0 ||
+                        (maxNextStep + gameInstance.getCurrentSum() < gameInstance.settings.getTargetValue() && gameInstance.getMovesLeft() == 1)
+        ) {
+//            gameInstance.gameOver();
+        }
+
+        gameInstance.setPreviousSelectedValue(current);
+    }
+
+    class Button extends JButton {
+        private final Color activeBtn = new Color(98, 240, 150);
+        private final Color inactiveBtn = new Color(209, 209, 209);
+
+        public Button(String text) {
+            super(text);
+            this.setEnabled(true);
+        }
+
+        @Override
+        public void setEnabled(boolean enabled) {
+            super.setEnabled(enabled);
+            setBackground(enabled ? activeBtn : inactiveBtn);
+        }
+    }
+
+    class ButtonGridListener implements ActionListener {
+        private final JButton btn;
+        private final int value;
+        private TRUEgay gameInstance;
+
+        public ButtonGridListener(JButton btn, TRUEgay gameInstance) {
+            this.btn = btn;
+            this.value = Integer.parseInt(btn.getText());
+            this.gameInstance = gameInstance;
+        }
+
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            gameInstance.move(value);
+            btn.setEnabled(false);
+        }
+    }
+
+    class Label extends JLabel {
+        String title;
+
+        public Label(String text, int value) {
+            super(text + ": " + value);
+            this.title = text;
+        }
+
+        public void updateLabel(int value) {
+            this.setText(title + ": " + value);
+        }
+    }
+
+    private Label createLabel(String title, int value, int x, int y) {
+        int width = 140; int height = 20;
+        Label label = new Label(title, value);
+        label.setBounds(x, y, width, height);
+        frame.add(label);
+        return label;
+    }
+
+    private void createMenu() {
         JMenuBar mb = new JMenuBar();
 
         JMenuItem restartItem = new JMenuItem("Restart");
@@ -135,311 +271,98 @@ class UIConstruct {
 
         frame.setJMenuBar(mb);
     }
-
-    public static int alert(JFrame frame, String title, String message, int messageType) {
-        Object[] options = { "Restart", "Exit" };
-        return JOptionPane.showOptionDialog(
-                frame,
-                message,
-                title,
-                JOptionPane.DEFAULT_OPTION,
-                messageType,
-                null,
-                options,
-                options[0]
-        );
-    }
-
-    public static Label createLabel(JFrame frame, String title, int value, int x, int y) {
-        int width = 140; int height = 20;
-        Label label = new Label(new JLabel(), title, value);
-        label.j.setBounds(x, y, width, height);
-        frame.add(label.j);
-        return label;
-    }
 }
 
-class Game {
-    static JFrame frame;
-    private static Button[][] buttons;
-    public static int movesLeft;
-    public static int currentSum;
-    public static int Previous;
-    public static int Current;
+class TRUEgay {
+    public Settings settings;
+    private UIController UI;
+    private int movesLeft;
+    private int currentSum;
+    private int previousSelectedValue;
+    private int currentSelectedValue;
 
-    private static Label sumValueLabel;
-    private static Label movesLeftLabel;
-
-    // UI settings
-    private static final int BUTTON_SIZE = 50; // width and height of the buttons
-    private static final int PADDING = 30; // frame paddings
-
-    public Game() {
-        String TITLE = "More or less, less is more";
-        frame = new JFrame(TITLE);
-        buttons = new Button[Settings.N][Settings.N];
+    public TRUEgay(UIController UI) {
+        settings = new Settings();
+//        UIController UI = new UIController(isRandomLayout, settings);
+        this.UI = UI;
+        this.movesLeft = settings.totalMoves;
     }
 
-    public static void initialize(boolean setRandomly) {
-        Previous = 0;
-        currentSum = 0;
-        movesLeft = Settings.totalMoves;
+    public void move(int value) {
+        previousSelectedValue = currentSelectedValue;
+        currentSelectedValue = value;
+        currentSum += value;
+        movesLeft--;
 
-        int frameWidth = Settings.N * BUTTON_SIZE + PADDING * 2;
-        int frameHeight = Settings.N * BUTTON_SIZE +  PADDING * 4;
+        UI.sumValueLabel.updateLabel(currentSum);
+        UI.movesLeftLabel.updateLabel(movesLeft);
 
-        UIConstruct.createMenu(frame);
-        UIConstruct.createLabel(frame, "Target value", Settings.targetValue, PADDING, PADDING);
-        sumValueLabel = UIConstruct.createLabel(frame, "SUM", currentSum, PADDING, frameHeight - PADDING - 20);
-        movesLeftLabel = UIConstruct.createLabel(frame, "Moves left", Settings.totalMoves, frameWidth - 130, PADDING);
-
-        // add buttons on the field
-        if (setRandomly) {
-            initializeButtonsRandomly();
-        }
-
-        frame.setSize(frameWidth, frameHeight);
-        frame.setLayout(null);
-        frame.setVisible(true);
-    }
-
-    public static void initializeButtonsRandomly() {
-        Random random = new Random();
-        for (int i = 0; i < Settings.N; i++) {
-            for (int j = 0; j < Settings.N; j++) {
-                int randomDigit = random.nextInt(9) + 1;
-                addButtonOnField(j, i, Integer.toString(randomDigit));
-            }
-        }
-    }
-
-    private static void addButtonOnField(int col, int row, String value) {
-        buttons[row][col] = new Button(value);
-        int x = PADDING + (col * BUTTON_SIZE);
-        int y = PADDING * 2 + (row * BUTTON_SIZE);
-        buttons[row][col].setBounds(x, y, BUTTON_SIZE, BUTTON_SIZE);
-        buttons[row][col].addActionListener(new ButtonClickListener(buttons[row][col]));
-        frame.add(buttons[row][col]);
-    }
-
-    public static void fieldValidation() {
-        Set<String> possibleMoves = new HashSet<>();
-
-        for (int i = 0; i < Settings.N; i++) {
-            for (int j = 0; j < Settings.N; j++) {
-                buttons[i][j].setEnabled(true);
-                int col = i + 1; int row = j + 1;
-                if (Previous == 0) {
-                    if (col % Current == 0 || row % Current == 0) {
-                        possibleMoves.add(buttons[i][j].getText());
-                    } else {
-                        buttons[i][j].setEnabled(false);
-                    }
-                } else {
-                    if ((col % Current == 0 && col % Previous == 0) || (row % Current == 0 && row % Previous == 0)) {
-                        possibleMoves.add(buttons[i][j].getText());
-                    } else {
-                        buttons[i][j].setEnabled(false);
-                    }
-                }
-            }
-        }
-
-        int maxNextStep = 0;
-        for (String element : possibleMoves) {
-            maxNextStep = Integer.parseInt(element);
-        }
-
-        if (
-            maxNextStep == 0 ||
-            (maxNextStep + currentSum < Settings.targetValue && movesLeft == 1)
-        ) {
-            gameOver();
-        }
-
-        Previous = Current;
-    }
-
-    public static void move() {
-        sumValueLabel.value = currentSum;
-        movesLeftLabel.value = movesLeft;
-
-        sumValueLabel.updateLabel();
-        movesLeftLabel.updateLabel();
-
-        if (currentSum >= Settings.targetValue) win();
-        else {
-            if (movesLeft == 0) gameOver();
-            fieldValidation();
-        }
-    }
-
-    private static void win() {
-        int response = UIConstruct.alert(frame, "Win", "You won! Congratulations. Restart?", JOptionPane.PLAIN_MESSAGE);
-        if (response == 0) {
-            restartGame();
+        if (currentSum >= settings.targetValue) {
+//            win();
         } else {
-            exitGame();
+//            if (movesLeft == 0) gameOver();
+            UI.gridRerenderOnMove(this);
         }
     }
 
-    private static void gameOver() {
-        int deviation = Settings.targetValue - currentSum;
-        int response = UIConstruct.alert(frame, "Game Over", "No more moves left. Deviation: " + deviation + ". Restart?", JOptionPane.ERROR_MESSAGE);
-        if (response == 0) {
-            restartGame();
-        } else {
-            exitGame();
-        }
+    public int getCurrentSum() {
+        return currentSum;
     }
 
-    public static void restartGame() {
-        frame.getContentPane().removeAll();
-        frame.dispose();
-
-        initialize(true);
+    public int getMovesLeft() {
+        return movesLeft;
     }
 
-    private static void exitGame() {
-        System.exit(0);
+    public int getPreviousSelectedValue() {
+        return previousSelectedValue;
     }
-    static class Settings {
+
+    public void setPreviousSelectedValue(int previousSelectedValue) {
+        this.previousSelectedValue = previousSelectedValue;
+    }
+
+    public int getCurrentSelectedValue() {
+        return currentSelectedValue;
+    }
+
+    public void setCurrentSelectedValue(int currentSelectedValue) {
+        this.currentSelectedValue = currentSelectedValue;
+    }
+
+    class Settings {
         // Game settings
-        private static int N = 10; // N*N is a field size
-        private static int totalMoves = 10;
-        private static int targetValue = 20;
-        static ManualSettings manualSettings;
-        static class ManualSettings extends JDialog {
-            JTextField fieldSizeField;
-            JTextField movesField;
-            JTextField targetValueField;
-            JButton applyBtn;
+        private int gameFieldSize = 10; // N*N is a field size
+        private int totalMoves = 10;
+        private int targetValue = 20;
 
-            public ManualSettings(JFrame parent) {
-                super(parent, "Manual Settings", true);
-                setLayout(new FlowLayout());
-
-                add(new JLabel("Field Size:"));
-                fieldSizeField = new JTextField(Integer.toString(N), 10);
-                add(fieldSizeField);
-
-                add(new JLabel("Number of Moves:"));
-                movesField = new JTextField(Integer.toString(totalMoves), 10);
-                add(movesField);
-
-                add(new JLabel("Target Value:"));
-                targetValueField = new JTextField(Integer.toString(targetValue), 10);
-                add(targetValueField);
-
-                add(new JLabel(""));
-                applyBtn = new JButton("Apply");
-                add(applyBtn);
-
-                applyBtn.addActionListener(new ActionListener() {
-                    @Override
-                    public void actionPerformed(ActionEvent e) {
-                        try {
-                            int fields = Integer.parseInt(fieldSizeField.getText());
-                            int moves = Integer.parseInt(movesField.getText());
-                            int target = Integer.parseInt(targetValueField.getText());
-
-                            applySettings(fields, moves, target);
-
-                            setVisible(false);
-                        } catch (NumberFormatException ex) {
-                            JOptionPane.showMessageDialog(getParent(), "Invalid input. Please enter numeric values.", "Error", JOptionPane.ERROR_MESSAGE);
-                        }
-                    }
-                });
-
-                setSize(300,300);
-                setLocationRelativeTo(parent);
-            }
+        public int getGameFieldSize() {
+            return gameFieldSize;
         }
 
-        public static void setEasyMode() {
-            applySettings(10, 15, 20);
+        public void setGameFieldSize(int newGameFieldSize) {
+            this.gameFieldSize = newGameFieldSize;
         }
 
-        public static void setMediumMode() {
-            applySettings(10, 12, 25);
+        public int getTotalMoves() {
+            return totalMoves;
         }
 
-        public static void setHardMode() {
-            applySettings(10, 10, 30);
+        public void setTotalMoves(int totalMoves) {
+            this.totalMoves = totalMoves;
         }
 
-        private static void applySettings(int fields, int moves, int target) {
-            N = fields;
-            totalMoves = moves;
-            targetValue = target;
-
-            restartGame();
+        public int getTargetValue() {
+            return targetValue;
         }
-    }
 
-    public static void exportLayout() {
-        JFileChooser fileChooser = new JFileChooser();
-        int exp = fileChooser.showSaveDialog(frame);
-
-        if (exp == JFileChooser.APPROVE_OPTION) {
-            String path = fileChooser.getSelectedFile().getAbsolutePath() + ".txt";
-
-            try (BufferedWriter writer = new BufferedWriter(new FileWriter(path))) {
-                writer.write(Settings.N + " | " +  Settings.totalMoves + " | " + Settings.targetValue);
-                writer.newLine();
-                for (int i = 0; i < Settings.N; i++) {
-                    for (int j = 0; j < Settings.N; j++) {
-                        writer.write(buttons[i][j].getText() + " ");
-                    }
-                    writer.newLine();
-                }
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        }
-    }
-
-    public static void importLayout() {
-        JFileChooser fileChooser = new JFileChooser();
-        int imp = fileChooser.showSaveDialog(frame);
-
-        if (imp == JFileChooser.APPROVE_OPTION) {
-            String path = fileChooser.getSelectedFile().getAbsolutePath();
-
-            try (BufferedReader reader = new BufferedReader(new FileReader(path))) {
-                frame.getContentPane().removeAll();
-                frame.dispose();
-
-                initialize(false);
-
-                String firstLine = reader.readLine();
-                StringTokenizer firstLineTokens = new StringTokenizer(firstLine, "|");
-                Settings.N = Integer.parseInt(firstLineTokens.nextToken().trim());
-                Settings.totalMoves = Integer.parseInt(firstLineTokens.nextToken().trim());
-                Settings.targetValue = Integer.parseInt(firstLineTokens.nextToken().trim());
-
-                for (int i = 0; i < Settings.N; i++) {
-                    String line = reader.readLine();
-                    StringTokenizer lineTokens = new StringTokenizer(line, " ");
-                    for (int j = 0; j < Settings.N; j++) {
-                        String value = lineTokens.nextToken().trim();
-                        addButtonOnField(j, i, value);
-                    }
-                    System.out.println();
-                }
-
-            } catch (IOException | NumberFormatException e) {
-                e.printStackTrace();
-                JOptionPane.showMessageDialog(frame, "Error reading the file", "Error", JOptionPane.ERROR_MESSAGE);
-            }
+        public void setTargetValue(int targetValue) {
+            this.targetValue = targetValue;
         }
     }
 }
 
 public class Main {
     public static void main(String[] args) {
-        new Game();
-        Game.initialize(true);
+        UIController uiController = new UIController();
     }
 }
