@@ -4,6 +4,8 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import java.io.*;
 import java.util.HashSet;
 import java.util.Random;
@@ -28,6 +30,15 @@ class UIController {
         frame.setSize(frameWidth, frameHeight);
         frame.setLayout(null);
         frame.setVisible(true);
+
+        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        frame.addWindowListener(new WindowAdapter() {
+            @Override
+            public void windowClosing(WindowEvent e) {
+                super.windowClosing(e);
+                JOptionPane.showConfirmDialog(frame,"Are sure you want to close the application?");
+            }
+        });
 
         JLabel lobbyLabel = new JLabel(TITLE);
         lobbyLabel.setBounds(60, 50, 200, 40);
@@ -72,7 +83,7 @@ class UIController {
         public void actionPerformed(ActionEvent e) {
             switch (option){
                 case 0:
-//                    Game.restartGame();
+//                    Game.restartGame(); // надо сделать рестарт с тем же лэйаутом
                     break;
                 case 1:
 //                    Game.Settings.manualSettings = new Game.Settings.ManualSettings(Game.frame);
@@ -97,7 +108,7 @@ class UIController {
         }
     }
 
-    private void startNewGame() {
+    public void startNewGame() {
         TRUEgay truegay = new TRUEgay(this);
         renderGameField(truegay, true);
     }
@@ -107,6 +118,7 @@ class UIController {
         int frameHeight = gameInstance.settings.getGameFieldSize() * BUTTON_SIZE +  PADDING * 4;
 
         frame.getContentPane().removeAll();
+        frame.dispose();
 
         frame.setSize(frameWidth, frameHeight);
         frame.setLayout(null);
@@ -119,6 +131,39 @@ class UIController {
 
         buttons = new Button[gameInstance.settings.getGameFieldSize()][gameInstance.settings.getGameFieldSize()];
         renderGrid(isRandomLayout, gameInstance);
+    }
+
+    private void createMenu() {
+        JMenuBar mb = new JMenuBar();
+
+        JMenuItem restartItem = new JMenuItem("Restart");
+        mb.add(restartItem);
+        restartItem.addActionListener(new MenuListener(0));
+
+        JMenuItem settingsItem = new JMenuItem("Manual settings");
+        mb.add(settingsItem);
+        settingsItem.addActionListener(new MenuListener(1));
+
+        JMenu modeSubmenu = new JMenu("Difficulty");
+        JMenuItem easyItem = new JMenuItem("Easy");
+        easyItem.addActionListener(new MenuListener(2));
+        JMenuItem mediumItem = new JMenuItem("Medium");
+        mediumItem.addActionListener(new MenuListener(3));
+        JMenuItem hardItem = new JMenuItem("Hard");
+        hardItem.addActionListener(new MenuListener(4));
+        modeSubmenu.add(easyItem); modeSubmenu.add(mediumItem); modeSubmenu.add(hardItem);
+        mb.add(modeSubmenu);
+
+        JMenu layoutSubmenu = new JMenu("Layout");
+        JMenuItem exportItem = new JMenuItem("Export");
+        exportItem.addActionListener(new MenuListener(5));
+        layoutSubmenu.add(exportItem);
+        JMenuItem importItem = new JMenuItem("Import");
+        importItem.addActionListener(new MenuListener(6));
+        layoutSubmenu.add(importItem);
+        mb.add(layoutSubmenu);
+
+        frame.setJMenuBar(mb);
     }
 
     private void renderGrid(boolean isRandomLayout, TRUEgay gameInstance) {
@@ -143,7 +188,7 @@ class UIController {
         buttons[row][col] = button;
     }
 
-    public void gridRerenderOnMove(TRUEgay gameInstance) {
+    public void rerenderGridOnMove(TRUEgay gameInstance) {
         Set<String> possibleMoves = new HashSet<>();
 
         int current = gameInstance.getCurrentSelectedValue();
@@ -239,37 +284,18 @@ class UIController {
         return label;
     }
 
-    private void createMenu() {
-        JMenuBar mb = new JMenuBar();
-
-        JMenuItem restartItem = new JMenuItem("Restart");
-        mb.add(restartItem);
-        restartItem.addActionListener(new MenuListener(0));
-
-        JMenuItem settingsItem = new JMenuItem("Manual settings");
-        mb.add(settingsItem);
-        settingsItem.addActionListener(new MenuListener(1));
-
-        JMenu modeSubmenu = new JMenu("Difficulty");
-        JMenuItem easyItem = new JMenuItem("Easy");
-        easyItem.addActionListener(new MenuListener(2));
-        JMenuItem mediumItem = new JMenuItem("Medium");
-        mediumItem.addActionListener(new MenuListener(3));
-        JMenuItem hardItem = new JMenuItem("Hard");
-        hardItem.addActionListener(new MenuListener(4));
-        modeSubmenu.add(easyItem); modeSubmenu.add(mediumItem); modeSubmenu.add(hardItem);
-        mb.add(modeSubmenu);
-
-        JMenu layoutSubmenu = new JMenu("Layout");
-        JMenuItem exportItem = new JMenuItem("Export");
-        exportItem.addActionListener(new MenuListener(5));
-        layoutSubmenu.add(exportItem);
-        JMenuItem importItem = new JMenuItem("Import");
-        importItem.addActionListener(new MenuListener(6));
-        layoutSubmenu.add(importItem);
-        mb.add(layoutSubmenu);
-
-        frame.setJMenuBar(mb);
+    public int alert(String title, String message, int messageType) {
+        Object[] options = { "New game", "Exit" };
+        return JOptionPane.showOptionDialog(
+                frame,
+                message,
+                title,
+                JOptionPane.DEFAULT_OPTION,
+                messageType,
+                null,
+                options,
+                options[0]
+        );
     }
 }
 
@@ -298,11 +324,34 @@ class TRUEgay {
         UI.movesLeftLabel.updateLabel(movesLeft);
 
         if (currentSum >= settings.targetValue) {
-//            win();
+            win();
         } else {
-//            if (movesLeft == 0) gameOver();
-            UI.gridRerenderOnMove(this);
+            if (movesLeft == 0) gameOver();
+            UI.rerenderGridOnMove(this);
         }
+    }
+
+    private void win() {
+        int response = UI.alert("Win", "You won! Congratulations. New Game?", JOptionPane.PLAIN_MESSAGE);
+        if (response == 0) {
+            UI.startNewGame();
+        } else {
+            exitGame();
+        }
+    }
+
+    private void gameOver() {
+        int deviation = settings.targetValue - currentSum;
+        int response = UI.alert("Game Over", "No more moves left. Deviation: " + deviation + ". Restart?", JOptionPane.ERROR_MESSAGE);
+        if (response == 0) {
+            UI.startNewGame();
+        } else {
+            exitGame();
+        }
+    }
+
+    private void exitGame() {
+        System.exit(0);
     }
 
     public int getCurrentSum() {
