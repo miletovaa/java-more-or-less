@@ -105,7 +105,7 @@ class UIController {
 //                    Game.exportLayout();
                     break;
                 case 6:
-//                    Game.importLayout();
+                    importLayout(gameInstance);
                     break;
             }
         }
@@ -156,6 +156,41 @@ class UIController {
 
             setSize(300,300);
             setLocationRelativeTo(parent);
+        }
+    }
+
+    public void importLayout(Game gameInstance) {
+        JFileChooser fileChooser = new JFileChooser();
+        int imp = fileChooser.showSaveDialog(frame);
+
+        if (imp == JFileChooser.APPROVE_OPTION) {
+            String path = fileChooser.getSelectedFile().getAbsolutePath();
+
+            try (BufferedReader reader = new BufferedReader(new FileReader(path))) {
+                frame.getContentPane().removeAll();
+                frame.dispose();
+
+                String firstLine = reader.readLine();
+                StringTokenizer firstLineTokens = new StringTokenizer(firstLine, "|");
+                int fields = Integer.parseInt(firstLineTokens.nextToken().trim());
+                int moves = Integer.parseInt(firstLineTokens.nextToken().trim());
+                int target = Integer.parseInt(firstLineTokens.nextToken().trim());
+                gameInstance.settings.applySettings(fields, moves, target);
+
+                for (int i = 0; i < fields; i++) {
+                    String line = reader.readLine();
+                    StringTokenizer lineTokens = new StringTokenizer(line, " ");
+                    for (int j = 0; j < fields; j++) {
+                        String value = lineTokens.nextToken().trim();
+                        buttons[i][j] = addButtonOnField(j, i, value, gameInstance);
+                    }
+                }
+
+                renderGrid(false, gameInstance);
+            } catch (IOException | NumberFormatException e) {
+                e.printStackTrace();
+                JOptionPane.showMessageDialog(frame, "Error reading the file", "Error", JOptionPane.ERROR_MESSAGE);
+            }
         }
     }
 
