@@ -231,18 +231,18 @@ class UIController {
             }
         }
 
-//        int maxNextStep = 0;
-//        for (String element : possibleMoves) {
-//            maxNextStep = Integer.parseInt(element);
-//        }
-//
-//        if (
-//                maxNextStep == 0 ||
-//                        (maxNextStep + gameInstance.getCurrentSum() < gameInstance.settings.getTargetValue() && gameInstance.getMovesLeft() == 1)
-//        ) {
-//            gameInstance.gameOver();
-//        }
-//
+        int maxNextStep = 0;
+        for (String element : possibleMoves) {
+            maxNextStep = Integer.parseInt(element);
+        }
+
+        if (
+                maxNextStep == 0 ||
+                        (maxNextStep + gameInstance.getCurrentSum() < gameInstance.settings.getTargetValue() && gameInstance.getMovesLeft() == 1)
+        ) {
+            gameInstance.gameOver();
+        }
+
         gameInstance.setPreviousSelectedValue(current);
     }
 
