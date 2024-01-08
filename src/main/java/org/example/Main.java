@@ -65,25 +65,27 @@ class UIController {
         @Override
         public void actionPerformed(ActionEvent e) {
             if (isRandomLayout) {
-                startNewGame();
+                startNewGame(false);
             } else {
-//                importGame();
+//              importGame();
             }
         }
     }
 
     class MenuListener implements ActionListener {
         private final int option;
+        private Game gameInstance;
 
-        public MenuListener(int option) {
+        public MenuListener(Game gameInstance, int option) {
             this.option = option;
+            this.gameInstance = gameInstance;
         }
 
         @Override
         public void actionPerformed(ActionEvent e) {
             switch (option){
                 case 0:
-//                    Game.restartGame(); // надо сделать рестарт с тем же лэйаутом
+                    startNewGame(true);
                     break;
                 case 1:
 //                    Game.Settings.manualSettings = new Game.Settings.ManualSettings(Game.frame);
@@ -108,12 +110,18 @@ class UIController {
         }
     }
 
-    public void startNewGame() {
-        TRUEgay truegay = new TRUEgay(this);
-        renderGameField(truegay, true);
+    public void startNewGame(boolean isRestart) {
+        Game gameInstance = new Game(this);
+        if (!isRestart) {
+            renderGameField(gameInstance, true);
+        } else {
+            sumValueLabel.updateLabel(0);
+            movesLeftLabel.updateLabel(gameInstance.settings.getTotalMoves());
+            renderGameField(gameInstance, false);
+        }
     }
 
-    private void renderGameField(TRUEgay gameInstance, boolean isRandomLayout) {
+    private void renderGameField(Game gameInstance, boolean isRandomLayout) {
         int frameWidth = gameInstance.settings.getGameFieldSize() * BUTTON_SIZE + PADDING * 2;
         int frameHeight = gameInstance.settings.getGameFieldSize() * BUTTON_SIZE +  PADDING * 4;
 
@@ -124,75 +132,83 @@ class UIController {
         frame.setLayout(null);
         frame.setVisible(true);
 
-        createMenu();
+        createMenu(gameInstance);
         createLabel("Target value", gameInstance.settings.getTargetValue(), PADDING, PADDING);
         sumValueLabel = createLabel("SUM", 0, PADDING, frameHeight - PADDING - 20);
         movesLeftLabel = createLabel("Moves left", gameInstance.settings.getTotalMoves(),frameWidth - 130, PADDING);
 
-        buttons = new Button[gameInstance.settings.getGameFieldSize()][gameInstance.settings.getGameFieldSize()];
+        if (isRandomLayout) buttons = new Button[gameInstance.settings.getGameFieldSize()][gameInstance.settings.getGameFieldSize()];
         renderGrid(isRandomLayout, gameInstance);
     }
 
-    private void createMenu() {
+    private void createMenu(Game gameInstance) {
         JMenuBar mb = new JMenuBar();
 
         JMenuItem restartItem = new JMenuItem("Restart");
         mb.add(restartItem);
-        restartItem.addActionListener(new MenuListener(0));
+        restartItem.addActionListener(new MenuListener(gameInstance, 0));
 
         JMenuItem settingsItem = new JMenuItem("Manual settings");
         mb.add(settingsItem);
-        settingsItem.addActionListener(new MenuListener(1));
+        settingsItem.addActionListener(new MenuListener(gameInstance, 1));
 
         JMenu modeSubmenu = new JMenu("Difficulty");
         JMenuItem easyItem = new JMenuItem("Easy");
-        easyItem.addActionListener(new MenuListener(2));
+        easyItem.addActionListener(new MenuListener(gameInstance, 2));
         JMenuItem mediumItem = new JMenuItem("Medium");
-        mediumItem.addActionListener(new MenuListener(3));
+        mediumItem.addActionListener(new MenuListener(gameInstance, 3));
         JMenuItem hardItem = new JMenuItem("Hard");
-        hardItem.addActionListener(new MenuListener(4));
+        hardItem.addActionListener(new MenuListener(gameInstance, 4));
         modeSubmenu.add(easyItem); modeSubmenu.add(mediumItem); modeSubmenu.add(hardItem);
         mb.add(modeSubmenu);
 
         JMenu layoutSubmenu = new JMenu("Layout");
         JMenuItem exportItem = new JMenuItem("Export");
-        exportItem.addActionListener(new MenuListener(5));
+        exportItem.addActionListener(new MenuListener(gameInstance, 5));
         layoutSubmenu.add(exportItem);
         JMenuItem importItem = new JMenuItem("Import");
-        importItem.addActionListener(new MenuListener(6));
+        importItem.addActionListener(new MenuListener(gameInstance, 6));
         layoutSubmenu.add(importItem);
         mb.add(layoutSubmenu);
 
         frame.setJMenuBar(mb);
     }
 
-    private void renderGrid(boolean isRandomLayout, TRUEgay gameInstance) {
+    private void renderGrid(boolean isRandomLayout, Game gameInstance) {
         if (isRandomLayout) {
             Random random = new Random();
             for (int i = 0; i < gameInstance.settings.getGameFieldSize(); i++) {
                 for (int j = 0; j < gameInstance.settings.getGameFieldSize(); j++) {
                     int randomDigit = random.nextInt(9) + 1;
-                    addButtonOnField(j, i, Integer.toString(randomDigit), gameInstance);
+                    buttons[i][j] = addButtonOnField(j, i, Integer.toString(randomDigit), gameInstance);
+                }
+            }
+        } else {
+            for (int i = 0; i < gameInstance.settings.getGameFieldSize(); i++) {
+                for (int j = 0; j < gameInstance.settings.getGameFieldSize(); j++) {
+                    addButtonOnField(j, i, buttons[i][j].getText(), gameInstance);
                 }
             }
         }
     }
 
-    private void addButtonOnField(int col, int row, String value, TRUEgay gameInstance) {
+    private Button addButtonOnField(int col, int row, String value, Game gameInstance) {
         Button button = new Button(value);
         int x = PADDING + (col * BUTTON_SIZE);
         int y = PADDING * 2 + (row * BUTTON_SIZE);
         button.setBounds(x, y, BUTTON_SIZE, BUTTON_SIZE);
         button.addActionListener(new ButtonGridListener(button, gameInstance));
         frame.add(button);
-        buttons[row][col] = button;
+        return button;
     }
 
-    public void rerenderGridOnMove(TRUEgay gameInstance) {
+    public void rerenderGridOnMove(Game gameInstance) {
         Set<String> possibleMoves = new HashSet<>();
 
         int current = gameInstance.getCurrentSelectedValue();
         int previous = gameInstance.getPreviousSelectedValue();
+        System.out.println("Current " + current);
+        System.out.println("Previous " + previous);
 
         for (int i = 0; i < gameInstance.settings.getGameFieldSize(); i++) {
             for (int j = 0; j < gameInstance.settings.getGameFieldSize(); j++) {
@@ -205,8 +221,9 @@ class UIController {
                         buttons[i][j].setEnabled(false);
                     }
                 } else {
-                    if ((col % current == 0 && col % previous == 0) || (row % current == 0 && row % previous == 0)) {
+                    if ((col % current == 0 || row % current == 0) && (col % previous == 0 || row % previous == 0) ) {
                         possibleMoves.add(buttons[i][j].getText());
+                        System.out.println("Button " + i + " " + j + " is available.");
                     } else {
                         buttons[i][j].setEnabled(false);
                     }
@@ -214,18 +231,18 @@ class UIController {
             }
         }
 
-        int maxNextStep = 0;
-        for (String element : possibleMoves) {
-            maxNextStep = Integer.parseInt(element);
-        }
-
-        if (
-                maxNextStep == 0 ||
-                        (maxNextStep + gameInstance.getCurrentSum() < gameInstance.settings.getTargetValue() && gameInstance.getMovesLeft() == 1)
-        ) {
+//        int maxNextStep = 0;
+//        for (String element : possibleMoves) {
+//            maxNextStep = Integer.parseInt(element);
+//        }
+//
+//        if (
+//                maxNextStep == 0 ||
+//                        (maxNextStep + gameInstance.getCurrentSum() < gameInstance.settings.getTargetValue() && gameInstance.getMovesLeft() == 1)
+//        ) {
 //            gameInstance.gameOver();
-        }
-
+//        }
+//
         gameInstance.setPreviousSelectedValue(current);
     }
 
@@ -248,9 +265,9 @@ class UIController {
     class ButtonGridListener implements ActionListener {
         private final JButton btn;
         private final int value;
-        private TRUEgay gameInstance;
+        private Game gameInstance;
 
-        public ButtonGridListener(JButton btn, TRUEgay gameInstance) {
+        public ButtonGridListener(JButton btn, Game gameInstance) {
             this.btn = btn;
             this.value = Integer.parseInt(btn.getText());
             this.gameInstance = gameInstance;
@@ -285,7 +302,7 @@ class UIController {
     }
 
     public int alert(String title, String message, int messageType) {
-        Object[] options = { "New game", "Exit" };
+        Object[] options = { "Restart", "New game", "Exit" };
         return JOptionPane.showOptionDialog(
                 frame,
                 message,
@@ -299,7 +316,7 @@ class UIController {
     }
 }
 
-class TRUEgay {
+class Game {
     public Settings settings;
     private UIController UI;
     private int movesLeft;
@@ -307,11 +324,14 @@ class TRUEgay {
     private int previousSelectedValue;
     private int currentSelectedValue;
 
-    public TRUEgay(UIController UI) {
+    public Game(UIController UI) {
         settings = new Settings();
-//        UIController UI = new UIController(isRandomLayout, settings);
         this.UI = UI;
         this.movesLeft = settings.totalMoves;
+        this.currentSum = 0;
+        this.previousSelectedValue = 0;
+        this.currentSelectedValue = 0;
+        System.out.println("New Game created");
     }
 
     public void move(int value) {
@@ -326,25 +346,30 @@ class TRUEgay {
         if (currentSum >= settings.targetValue) {
             win();
         } else {
-            if (movesLeft == 0) gameOver();
             UI.rerenderGridOnMove(this);
+            if (movesLeft == 0) gameOver();
         }
     }
 
     private void win() {
         int response = UI.alert("Win", "You won! Congratulations. New Game?", JOptionPane.PLAIN_MESSAGE);
         if (response == 0) {
-            UI.startNewGame();
+            UI.startNewGame(true);
+        } else if (response == 1) {
+            UI.startNewGame(false);
         } else {
             exitGame();
         }
     }
 
-    private void gameOver() {
+    public void gameOver() {
         int deviation = settings.targetValue - currentSum;
         int response = UI.alert("Game Over", "No more moves left. Deviation: " + deviation + ". Restart?", JOptionPane.ERROR_MESSAGE);
+        System.out.print(response);
         if (response == 0) {
-            UI.startNewGame();
+            UI.startNewGame(true);
+        } else if (response == 1) {
+            UI.startNewGame(false);
         } else {
             exitGame();
         }
@@ -381,7 +406,7 @@ class TRUEgay {
     class Settings {
         // Game settings
         private int gameFieldSize = 10; // N*N is a field size
-        private int totalMoves = 10;
+        private int totalMoves = 3;
         private int targetValue = 20;
 
         public int getGameFieldSize() {
