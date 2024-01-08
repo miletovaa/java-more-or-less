@@ -21,6 +21,7 @@ class UIController {
 
     public Label sumValueLabel;
     public Label movesLeftLabel;
+    private ManualSettings manualSettings;
 
     public UIController() {
         frame = new JFrame(TITLE);
@@ -88,17 +89,17 @@ class UIController {
                     startNewGame(true);
                     break;
                 case 1:
-//                    Game.Settings.manualSettings = new Game.Settings.ManualSettings(Game.frame);
-//                    Game.Settings.manualSettings.setVisible(true);
+                    manualSettings = new ManualSettings(frame, gameInstance);
+                    manualSettings.setVisible(true);
                     break;
                 case 2:
-//                    Game.Settings.setEasyMode();
+                    gameInstance.settings.setEasyMode();
                     break;
                 case 3:
-//                    Game.Settings.setMediumMode();
+                    gameInstance.settings.setMediumMode();
                     break;
                 case 4:
-//                    Game.Settings.setHardMode();
+                    gameInstance.settings.setHardMode();
                     break;
                 case 5:
 //                    Game.exportLayout();
@@ -107,6 +108,54 @@ class UIController {
 //                    Game.importLayout();
                     break;
             }
+        }
+    }
+
+    class ManualSettings extends JDialog {
+        JTextField fieldSizeField;
+        JTextField movesField;
+        JTextField targetValueField;
+        JButton applyBtn;
+
+        public ManualSettings(JFrame parent, Game gameInstance) {
+            super(parent, "Manual Settings", true);
+            setLayout(new FlowLayout());
+
+            add(new JLabel("Field Size:"));
+            fieldSizeField = new JTextField(Integer.toString(gameInstance.settings.getGameFieldSize()), 10);
+            add(fieldSizeField);
+
+            add(new JLabel("Number of Moves:"));
+            movesField = new JTextField(Integer.toString(gameInstance.settings.getTotalMoves()), 10);
+            add(movesField);
+
+            add(new JLabel("Target Value:"));
+            targetValueField = new JTextField(Integer.toString(gameInstance.settings.getTargetValue()), 10);
+            add(targetValueField);
+
+            add(new JLabel(""));
+            applyBtn = new JButton("Apply");
+            add(applyBtn);
+
+            applyBtn.addActionListener(new ActionListener() {
+                @Override
+                public void actionPerformed(ActionEvent e) {
+                    try {
+                        int fields = Integer.parseInt(fieldSizeField.getText());
+                        int moves = Integer.parseInt(movesField.getText());
+                        int target = Integer.parseInt(targetValueField.getText());
+
+                        gameInstance.settings.applySettings(fields, moves, target);
+
+                        setVisible(false);
+                    } catch (NumberFormatException ex) {
+                        JOptionPane.showMessageDialog(getParent(), "Invalid input. Please enter numeric values.", "Error", JOptionPane.ERROR_MESSAGE);
+                    }
+                }
+            });
+
+            setSize(300,300);
+            setLocationRelativeTo(parent);
         }
     }
 
@@ -408,6 +457,26 @@ class Game {
         private int gameFieldSize = 10; // N*N is a field size
         private int totalMoves = 3;
         private int targetValue = 20;
+
+        public void applySettings(int fields, int moves, int target) {
+            gameFieldSize = fields;
+            totalMoves = moves;
+            targetValue = target;
+
+            UI.startNewGame(true);
+        }
+
+        public void setEasyMode() {
+            applySettings(10, 15, 20);
+        }
+
+        public void setMediumMode() {
+            applySettings(10, 12, 25);
+        }
+
+        public void setHardMode() {
+            applySettings(10, 10, 30);
+        }
 
         public int getGameFieldSize() {
             return gameFieldSize;
