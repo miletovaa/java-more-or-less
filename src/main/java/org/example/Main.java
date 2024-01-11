@@ -2,15 +2,9 @@ package org.example;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.awt.event.WindowAdapter;
-import java.awt.event.WindowEvent;
+import java.awt.event.*;
 import java.io.*;
-import java.util.HashSet;
-import java.util.Random;
-import java.util.Set;
-import java.util.StringTokenizer;
+import java.util.*;
 
 class UIController {
     JFrame frame;
@@ -66,7 +60,7 @@ class UIController {
         @Override
         public void actionPerformed(ActionEvent e) {
             if (isRandomLayout) {
-                startNewGame(false);
+                startNewGame(false, null);
             } else {
 //              importGame();
             }
@@ -86,7 +80,8 @@ class UIController {
         public void actionPerformed(ActionEvent e) {
             switch (option){
                 case 0:
-                    startNewGame(true);
+                    int[] settings = {gameInstance.settings.getGameFieldSize(), gameInstance.settings.getTotalMoves(), gameInstance.settings.getTargetValue()};
+                    startNewGame(true, settings);
                     break;
                 case 1:
                     manualSettings = new ManualSettings(frame, gameInstance);
@@ -216,14 +211,17 @@ class UIController {
         }
     }
 
-    public void startNewGame(boolean isRestart) {
-        Game gameInstance = new Game(this);
-        if (!isRestart) {
-            renderGameField(gameInstance, true);
+    public void startNewGame(boolean isRestart, int[] settings) {
+        Game gameInstance;
+        if (settings != null) {
+            gameInstance = new Game(this, settings[0], settings[1], settings[2]);
         } else {
+            gameInstance = new Game(this);
+        }
+        renderGameField(gameInstance, true);
+        if (isRestart) {
             sumValueLabel.updateLabel(0);
             movesLeftLabel.updateLabel(gameInstance.settings.getTotalMoves());
-            renderGameField(gameInstance, false);
         }
     }
 
@@ -440,6 +438,16 @@ class Game {
         System.out.println("New Game created");
     }
 
+    public Game(UIController UI, int gameFieldSize, int totalMoves, int targetValue) {
+        settings = new Settings(gameFieldSize, totalMoves, targetValue);
+        this.UI = UI;
+        this.movesLeft = settings.totalMoves;
+        this.currentSum = 0;
+        this.previousSelectedValue = 0;
+        this.currentSelectedValue = 0;
+        System.out.println("New Game created");
+    }
+
     public void move(int value) {
         previousSelectedValue = currentSelectedValue;
         currentSelectedValue = value;
@@ -459,23 +467,21 @@ class Game {
 
     private void win() {
         int response = UI.alert("Win", "You won! Congratulations. New Game?", JOptionPane.PLAIN_MESSAGE);
-        if (response == 0) {
-            UI.startNewGame(true);
-        } else if (response == 1) {
-            UI.startNewGame(false);
-        } else {
-            exitGame();
-        }
+        alertResponseReaction(response);
     }
 
     public void gameOver() {
         int deviation = settings.targetValue - currentSum;
         int response = UI.alert("Game Over", "No more moves left. Deviation: " + deviation + ". Restart?", JOptionPane.ERROR_MESSAGE);
-        System.out.print(response);
+        alertResponseReaction(response);
+    }
+
+    private void alertResponseReaction(int response) {
         if (response == 0) {
-            UI.startNewGame(true);
+            int[] settings = {this.settings.getGameFieldSize(), this.settings.getTotalMoves(), this.settings.getTargetValue()};
+            UI.startNewGame(true, settings);
         } else if (response == 1) {
-            UI.startNewGame(false);
+            UI.startNewGame(false, null);
         } else {
             exitGame();
         }
@@ -505,22 +511,31 @@ class Game {
         return currentSelectedValue;
     }
 
-    public void setCurrentSelectedValue(int currentSelectedValue) {
-        this.currentSelectedValue = currentSelectedValue;
-    }
+//    public void setCurrentSelectedValue(int currentSelectedValue) {
+//        this.currentSelectedValue = currentSelectedValue;
+//    }
 
     class Settings {
         // Game settings
-        private int gameFieldSize = 10; // N*N is a field size
-        private int totalMoves = 3;
-        private int targetValue = 20;
+        private int gameFieldSize; // N*N is a field size
+        private int totalMoves;
+        private int targetValue;
+
+        public Settings() {
+            this.gameFieldSize = 10;
+            this.totalMoves = 10;
+            this.targetValue = 20;
+        }
+
+        public Settings(int gameFieldSize, int totalMoves, int targetValue) {
+            this.gameFieldSize = gameFieldSize;
+            this.totalMoves = totalMoves;
+            this.targetValue = targetValue;
+        }
 
         public void applySettings(int fields, int moves, int target) {
-            gameFieldSize = fields;
-            totalMoves = moves;
-            targetValue = target;
-
-            UI.startNewGame(true);
+            int[] settings = {fields, moves, target};
+            UI.startNewGame(false, settings);
         }
 
         public void setEasyMode() {
@@ -539,25 +554,25 @@ class Game {
             return gameFieldSize;
         }
 
-        public void setGameFieldSize(int newGameFieldSize) {
-            this.gameFieldSize = newGameFieldSize;
-        }
+//        public void setGameFieldSize(int newGameFieldSize) {
+//            this.gameFieldSize = newGameFieldSize;
+//        }
 
         public int getTotalMoves() {
             return totalMoves;
         }
 
-        public void setTotalMoves(int totalMoves) {
-            this.totalMoves = totalMoves;
-        }
+//        public void setTotalMoves(int totalMoves) {
+//            this.totalMoves = totalMoves;
+//        }
 
         public int getTargetValue() {
             return targetValue;
         }
 
-        public void setTargetValue(int targetValue) {
-            this.targetValue = targetValue;
-        }
+//        public void setTargetValue(int targetValue) {
+//            this.targetValue = targetValue;
+//        }
     }
 }
 
