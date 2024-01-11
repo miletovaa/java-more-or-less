@@ -62,7 +62,7 @@ class UIController {
             if (isRandomLayout) {
                 startNewGame(false, null);
             } else {
-//              importGame();
+                importLayout();
             }
         }
     }
@@ -100,7 +100,7 @@ class UIController {
                     exportLayout(gameInstance);
                     break;
                 case 6:
-                    importLayout(gameInstance);
+                    importLayout();
                     break;
             }
         }
@@ -154,7 +154,7 @@ class UIController {
         }
     }
 
-    public void importLayout(Game gameInstance) {
+    public void importLayout() {
         JFileChooser fileChooser = new JFileChooser();
         int imp = fileChooser.showSaveDialog(frame);
 
@@ -170,7 +170,9 @@ class UIController {
                 int fields = Integer.parseInt(firstLineTokens.nextToken().trim());
                 int moves = Integer.parseInt(firstLineTokens.nextToken().trim());
                 int target = Integer.parseInt(firstLineTokens.nextToken().trim());
-                gameInstance.settings.applySettings(fields, moves, target);
+                Game gameInstance = new Game(this, fields, moves, target);
+
+                buttons = new Button[fields][fields];
 
                 for (int i = 0; i < fields; i++) {
                     String line = reader.readLine();
@@ -181,7 +183,9 @@ class UIController {
                     }
                 }
 
-                renderGrid(false, gameInstance);
+                renderGameField(gameInstance, false);
+                sumValueLabel.updateLabel(0);
+                movesLeftLabel.updateLabel(moves);
             } catch (IOException | NumberFormatException e) {
                 e.printStackTrace();
                 JOptionPane.showMessageDialog(frame, "Error reading the file", "Error", JOptionPane.ERROR_MESSAGE);
@@ -313,8 +317,6 @@ class UIController {
 
         int current = gameInstance.getCurrentSelectedValue();
         int previous = gameInstance.getPreviousSelectedValue();
-        System.out.println("Current " + current);
-        System.out.println("Previous " + previous);
 
         for (int i = 0; i < gameInstance.settings.getGameFieldSize(); i++) {
             for (int j = 0; j < gameInstance.settings.getGameFieldSize(); j++) {
@@ -329,7 +331,6 @@ class UIController {
                 } else {
                     if ((col % current == 0 || row % current == 0) && (col % previous == 0 || row % previous == 0) ) {
                         possibleMoves.add(buttons[i][j].getText());
-                        System.out.println("Button " + i + " " + j + " is available.");
                     } else {
                         buttons[i][j].setEnabled(false);
                     }
@@ -437,7 +438,6 @@ class Game {
         this.currentSum = 0;
         this.previousSelectedValue = 0;
         this.currentSelectedValue = 0;
-        System.out.println("New Game created");
     }
 
     public Game(UIController UI, int gameFieldSize, int totalMoves, int targetValue) {
@@ -447,7 +447,6 @@ class Game {
         this.currentSum = 0;
         this.previousSelectedValue = 0;
         this.currentSelectedValue = 0;
-        System.out.println("New Game created");
     }
 
     public void move(int value) {
@@ -513,10 +512,6 @@ class Game {
         return currentSelectedValue;
     }
 
-//    public void setCurrentSelectedValue(int currentSelectedValue) {
-//        this.currentSelectedValue = currentSelectedValue;
-//    }
-
     class Settings {
         // Game settings
         private int gameFieldSize; // N*N is a field size
@@ -556,25 +551,13 @@ class Game {
             return gameFieldSize;
         }
 
-//        public void setGameFieldSize(int newGameFieldSize) {
-//            this.gameFieldSize = newGameFieldSize;
-//        }
-
         public int getTotalMoves() {
             return totalMoves;
         }
 
-//        public void setTotalMoves(int totalMoves) {
-//            this.totalMoves = totalMoves;
-//        }
-
         public int getTargetValue() {
             return targetValue;
         }
-
-//        public void setTargetValue(int targetValue) {
-//            this.targetValue = targetValue;
-//        }
     }
 }
 
