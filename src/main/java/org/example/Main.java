@@ -102,7 +102,7 @@ class UIController {
                     gameInstance.settings.setHardMode();
                     break;
                 case 5:
-//                    Game.exportLayout();
+                    exportLayout(gameInstance);
                     break;
                 case 6:
                     importLayout(gameInstance);
@@ -190,6 +190,28 @@ class UIController {
             } catch (IOException | NumberFormatException e) {
                 e.printStackTrace();
                 JOptionPane.showMessageDialog(frame, "Error reading the file", "Error", JOptionPane.ERROR_MESSAGE);
+            }
+        }
+    }
+
+    public void exportLayout(Game gameInstance) {
+        JFileChooser fileChooser = new JFileChooser();
+        int exp = fileChooser.showSaveDialog(frame);
+
+        if (exp == JFileChooser.APPROVE_OPTION) {
+            String path = fileChooser.getSelectedFile().getAbsolutePath() + ".txt";
+
+            try (BufferedWriter writer = new BufferedWriter(new FileWriter(path))) {
+                writer.write(gameInstance.settings.getGameFieldSize() + " | " +  gameInstance.settings.getTotalMoves() + " | " + gameInstance.settings.getTargetValue());
+                writer.newLine();
+                for (int i = 0; i < gameInstance.settings.getGameFieldSize(); i++) {
+                    for (int j = 0; j < gameInstance.settings.getGameFieldSize(); j++) {
+                        writer.write(buttons[i][j].getText() + " ");
+                    }
+                    writer.newLine();
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
             }
         }
     }
