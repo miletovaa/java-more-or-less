@@ -218,10 +218,12 @@ class UIController {
         } else {
             gameInstance = new Game(this);
         }
-        renderGameField(gameInstance, true);
         if (isRestart) {
+            renderGameField(gameInstance, false);
             sumValueLabel.updateLabel(0);
             movesLeftLabel.updateLabel(gameInstance.settings.getTotalMoves());
+        } else {
+            renderGameField(gameInstance, true);
         }
     }
 
