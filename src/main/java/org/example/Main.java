@@ -18,6 +18,7 @@ class UIController {
     private Button[][] buttons;
     public Label sumValueLabel;
     public Label movesLeftLabel;
+    public String[][] layout;
 
     public UIController() {
         /* display of the game lobby frame */
@@ -191,13 +192,13 @@ class UIController {
                 Game gameInstance = new Game(this, fields, moves, target);
 
                 /* parsing of the rest of the file and rendering of the given game grid */
-                buttons = new Button[fields][fields];
+                layout = new String[fields][fields];
                 for (int i = 0; i < fields; i++) {
                     String line = reader.readLine();
                     StringTokenizer lineTokens = new StringTokenizer(line, " ");
                     for (int j = 0; j < fields; j++) {
                         String value = lineTokens.nextToken().trim();
-                        buttons[i][j] = addButtonOnField(j, i, value, gameInstance);
+                        layout[i][j] = value;
                     }
                 }
 
@@ -226,7 +227,7 @@ class UIController {
                 writer.newLine();
                 for (int i = 0; i < gameInstance.settings.getGameFieldSize(); i++) {
                     for (int j = 0; j < gameInstance.settings.getGameFieldSize(); j++) {
-                        writer.write(buttons[i][j].getText() + " ");
+                        writer.write(layout[i][j] + " ");
                     }
                     writer.newLine();
                 }
@@ -279,7 +280,7 @@ class UIController {
         sumValueLabel = createLabel("SUM", 0, PADDING, frameHeight - PADDING - 20);
         movesLeftLabel = createLabel("Moves left", gameInstance.settings.getTotalMoves(),frameWidth - 130, PADDING);
 
-        if (isRandomLayout) buttons = new Button[gameInstance.settings.getGameFieldSize()][gameInstance.settings.getGameFieldSize()];
+        buttons = new Button[gameInstance.settings.getGameFieldSize()][gameInstance.settings.getGameFieldSize()];
         renderGrid(isRandomLayout, gameInstance);
     }
 
@@ -319,18 +320,21 @@ class UIController {
 
     private void renderGrid(boolean isRandomLayout, Game gameInstance) {
         /* render of the random or given (previous or imported) layout */
+        int fields = gameInstance.settings.getGameFieldSize();
         if (isRandomLayout) {
             Random random = new Random();
-            for (int i = 0; i < gameInstance.settings.getGameFieldSize(); i++) {
-                for (int j = 0; j < gameInstance.settings.getGameFieldSize(); j++) {
+            layout = new String[fields][fields];
+            for (int i = 0; i < fields; i++) {
+                for (int j = 0; j < fields; j++) {
                     int randomDigit = random.nextInt(9) + 1;
+                    layout[i][j] = Integer.toString(randomDigit);
                     buttons[i][j] = addButtonOnField(j, i, Integer.toString(randomDigit), gameInstance);
                 }
             }
         } else {
-            for (int i = 0; i < gameInstance.settings.getGameFieldSize(); i++) {
-                for (int j = 0; j < gameInstance.settings.getGameFieldSize(); j++) {
-                    addButtonOnField(j, i, buttons[i][j].getText(), gameInstance);
+            for (int i = 0; i < fields; i++) {
+                for (int j = 0; j < fields; j++) {
+                    buttons[i][j] = addButtonOnField(j, i, layout[i][j], gameInstance);
                 }
             }
         }
