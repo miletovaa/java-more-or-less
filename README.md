@@ -46,7 +46,7 @@ target value). (10 points)
 - [x] Display the deviation from the final value in the graphical user interface when the
 move counter reaches zero (solution quality). (5 points)
 
-- [ ] Allow the game to detect when there is no possible continuation. (10 points)
+- [x] Allow the game to detect when there is no possible continuation. (10 points)
 
 ## Additional points (for over 100%):
 
