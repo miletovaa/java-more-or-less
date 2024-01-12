@@ -7,25 +7,26 @@ import java.io.*;
 import java.util.*;
 
 class UIController {
+    String TITLE = "More or less, less is more";
+
+    /* layout constants */
+    int BUTTON_SIZE = 50;
+    int PADDING = 30;
+
+    /* components initialization */
     JFrame frame;
     private Button[][] buttons;
-    String TITLE = "More or less, less is more";
-    int BUTTON_SIZE = 50; // width and height of the buttons
-    int PADDING = 30; // frame paddings
-
     public Label sumValueLabel;
     public Label movesLeftLabel;
-    private ManualSettings manualSettings;
 
     public UIController() {
+        /* display of the game lobby frame */
         frame = new JFrame(TITLE);
         int frameWidth = 300;
         int frameHeight = 300;
-
         frame.setSize(frameWidth, frameHeight);
         frame.setLayout(null);
         frame.setVisible(true);
-
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         frame.addWindowListener(new WindowAdapter() {
             @Override
@@ -35,6 +36,7 @@ class UIController {
             }
         });
 
+        /* adding game title label and functional buttons in lobby */
         JLabel lobbyLabel = new JLabel(TITLE);
         lobbyLabel.setBounds(60, 50, 200, 40);
         frame.add(lobbyLabel);
@@ -53,12 +55,13 @@ class UIController {
     }
 
     private class ButtonLobbyListener implements ActionListener {
-        private boolean isRandomLayout;
+        private final boolean isRandomLayout;
         private ButtonLobbyListener(boolean isRandomLayout) {
             this.isRandomLayout = isRandomLayout;
         }
         @Override
         public void actionPerformed(ActionEvent e) {
+            /* processing click on the lobby buttons */
             if (isRandomLayout) {
                 startNewGame(false, null);
             } else {
@@ -69,7 +72,7 @@ class UIController {
 
     class MenuListener implements ActionListener {
         private final int option;
-        private Game gameInstance;
+        private final Game gameInstance;
 
         public MenuListener(Game gameInstance, int option) {
             this.option = option;
@@ -78,27 +81,35 @@ class UIController {
 
         @Override
         public void actionPerformed(ActionEvent e) {
+            /* processing menu options selection */
             switch (option){
+                /* "restart" option */
                 case 0:
                     int[] settings = {gameInstance.settings.getGameFieldSize(), gameInstance.settings.getTotalMoves(), gameInstance.settings.getTargetValue()};
                     startNewGame(true, settings);
                     break;
+                /* "manual settings" option */
                 case 1:
-                    manualSettings = new ManualSettings(frame, gameInstance);
+                    ManualSettings manualSettings = new ManualSettings(frame, gameInstance);
                     manualSettings.setVisible(true);
                     break;
+                /* "game mode" -> "easy" option */
                 case 2:
                     gameInstance.settings.setEasyMode();
                     break;
+                /* "game mode" -> "medium" option */
                 case 3:
                     gameInstance.settings.setMediumMode();
                     break;
+                /* "game mode" -> "hard" option */
                 case 4:
                     gameInstance.settings.setHardMode();
                     break;
+                /* "layout" -> "export" option */
                 case 5:
                     exportLayout(gameInstance);
                     break;
+                /* "layout" -> "import" option */
                 case 6:
                     importLayout();
                     break;
@@ -113,6 +124,7 @@ class UIController {
         JButton applyBtn;
 
         public ManualSettings(JFrame parent, Game gameInstance) {
+            /* display of the manual settings modal */
             super(parent, "Manual Settings", true);
             setLayout(new FlowLayout());
 
@@ -136,6 +148,7 @@ class UIController {
                 @Override
                 public void actionPerformed(ActionEvent e) {
                     try {
+                        /* processing the manual settings change */
                         int fields = Integer.parseInt(fieldSizeField.getText());
                         int moves = Integer.parseInt(movesField.getText());
                         int target = Integer.parseInt(targetValueField.getText());
@@ -144,6 +157,7 @@ class UIController {
 
                         setVisible(false);
                     } catch (NumberFormatException ex) {
+                        /* input validation */
                         JOptionPane.showMessageDialog(getParent(), "Invalid input. Please enter numeric values.", "Error", JOptionPane.ERROR_MESSAGE);
                     }
                 }
@@ -155,6 +169,7 @@ class UIController {
     }
 
     public void importLayout() {
+        /* waiting for user's file choice */
         JFileChooser fileChooser = new JFileChooser();
         int imp = fileChooser.showSaveDialog(frame);
 
@@ -165,6 +180,9 @@ class UIController {
                 frame.getContentPane().removeAll();
                 frame.dispose();
 
+                /*  first line of the export file contains manual settings.
+                    setting them and restarting the game with new settings
+                */
                 String firstLine = reader.readLine();
                 StringTokenizer firstLineTokens = new StringTokenizer(firstLine, "|");
                 int fields = Integer.parseInt(firstLineTokens.nextToken().trim());
@@ -172,8 +190,8 @@ class UIController {
                 int target = Integer.parseInt(firstLineTokens.nextToken().trim());
                 Game gameInstance = new Game(this, fields, moves, target);
 
+                /* parsing of the rest of the file and rendering of the given game grid */
                 buttons = new Button[fields][fields];
-
                 for (int i = 0; i < fields; i++) {
                     String line = reader.readLine();
                     StringTokenizer lineTokens = new StringTokenizer(line, " ");
@@ -187,6 +205,7 @@ class UIController {
                 sumValueLabel.updateLabel(0);
                 movesLeftLabel.updateLabel(moves);
             } catch (IOException | NumberFormatException e) {
+                /* validation of the file */
                 e.printStackTrace();
                 JOptionPane.showMessageDialog(frame, "Error reading the file", "Error", JOptionPane.ERROR_MESSAGE);
             }
@@ -194,6 +213,7 @@ class UIController {
     }
 
     public void exportLayout(Game gameInstance) {
+        /* waiting for user's path choice */
         JFileChooser fileChooser = new JFileChooser();
         int exp = fileChooser.showSaveDialog(frame);
 
@@ -201,6 +221,7 @@ class UIController {
             String path = fileChooser.getSelectedFile().getAbsolutePath() + ".txt";
 
             try (BufferedWriter writer = new BufferedWriter(new FileWriter(path))) {
+                /* saving the current game grid in a txt file */
                 writer.write(gameInstance.settings.getGameFieldSize() + " | " +  gameInstance.settings.getTotalMoves() + " | " + gameInstance.settings.getTargetValue());
                 writer.newLine();
                 for (int i = 0; i < gameInstance.settings.getGameFieldSize(); i++) {
@@ -210,18 +231,25 @@ class UIController {
                     writer.newLine();
                 }
             } catch (IOException e) {
+                /* validation */
                 e.printStackTrace();
             }
         }
     }
 
     public void startNewGame(boolean isRestart, int[] settings) {
+        /* initialization of the new game.
+           passing settings properties, in case they are given,
+           else starting the game with default settings
+         */
         Game gameInstance;
         if (settings != null) {
             gameInstance = new Game(this, settings[0], settings[1], settings[2]);
         } else {
             gameInstance = new Game(this);
         }
+        /* if we restart the game - we get the previous button layout,
+           else rendering of the random layout */
         if (isRestart) {
             renderGameField(gameInstance, false);
             sumValueLabel.updateLabel(0);
@@ -232,6 +260,9 @@ class UIController {
     }
 
     private void renderGameField(Game gameInstance, boolean isRandomLayout) {
+        /* calculation of the game sizing.
+           display of the game frame.
+         */
         int frameWidth = gameInstance.settings.getGameFieldSize() * BUTTON_SIZE + PADDING * 2;
         int frameHeight = gameInstance.settings.getGameFieldSize() * BUTTON_SIZE +  PADDING * 4;
 
@@ -242,6 +273,7 @@ class UIController {
         frame.setLayout(null);
         frame.setVisible(true);
 
+        /* display of the menu and game labels */
         createMenu(gameInstance);
         createLabel("Target value", gameInstance.settings.getTargetValue(), PADDING, PADDING);
         sumValueLabel = createLabel("SUM", 0, PADDING, frameHeight - PADDING - 20);
@@ -252,6 +284,7 @@ class UIController {
     }
 
     private void createMenu(Game gameInstance) {
+        /* display of menu with options */
         JMenuBar mb = new JMenuBar();
 
         JMenuItem restartItem = new JMenuItem("Restart");
@@ -285,6 +318,7 @@ class UIController {
     }
 
     private void renderGrid(boolean isRandomLayout, Game gameInstance) {
+        /* render of the random or given (previous or imported) layout */
         if (isRandomLayout) {
             Random random = new Random();
             for (int i = 0; i < gameInstance.settings.getGameFieldSize(); i++) {
@@ -303,6 +337,7 @@ class UIController {
     }
 
     private Button addButtonOnField(int col, int row, String value, Game gameInstance) {
+        /* display of the button in the game field */
         Button button = new Button(value);
         int x = PADDING + (col * BUTTON_SIZE);
         int y = PADDING * 2 + (row * BUTTON_SIZE);
@@ -313,9 +348,12 @@ class UIController {
     }
 
     public void rerenderGridOnMove(Game gameInstance) {
+        /* rerender of the grid after the user's move */
         Set<String> possibleMoves = new HashSet<>();
 
+        /* current value - the number on the last clicked button */
         int current = gameInstance.getCurrentSelectedValue();
+        /* previous value - the number on the pre-last clicked button */
         int previous = gameInstance.getPreviousSelectedValue();
 
         for (int i = 0; i < gameInstance.settings.getGameFieldSize(); i++) {
@@ -323,12 +361,21 @@ class UIController {
                 buttons[i][j].setEnabled(true);
                 int col = i + 1; int row = j + 1;
                 if (previous == 0) {
+                    /* if it's the first move -
+                       the next move available on buttons
+                       in rows and columns divisible by current value
+                    */
                     if (col % current == 0 || row % current == 0) {
                         possibleMoves.add(buttons[i][j].getText());
                     } else {
                         buttons[i][j].setEnabled(false);
                     }
                 } else {
+                    /* if it is not the first move -
+                       the next move available on buttons
+                       on the intersections of the
+                       rows and columns divisible by current or previous value
+                    */
                     if ((col % current == 0 || row % current == 0) && (col % previous == 0 || row % previous == 0) ) {
                         possibleMoves.add(buttons[i][j].getText());
                     } else {
@@ -338,14 +385,16 @@ class UIController {
             }
         }
 
+        /* getting the biggest available value of the next move */
         int maxNextStep = 0;
         for (String element : possibleMoves) {
             maxNextStep = Integer.parseInt(element);
         }
 
+        /* if there are no steps left - game is over */
         if (
                 maxNextStep == 0 ||
-                        (maxNextStep + gameInstance.getCurrentSum() < gameInstance.settings.getTargetValue() && gameInstance.getMovesLeft() == 1)
+                (maxNextStep + gameInstance.getCurrentSum() < gameInstance.settings.getTargetValue() && gameInstance.getMovesLeft() == 1)
         ) {
             gameInstance.gameOver();
         }
@@ -364,6 +413,7 @@ class UIController {
 
         @Override
         public void setEnabled(boolean enabled) {
+            /* just added colors for available and unavailable buttons */
             super.setEnabled(enabled);
             setBackground(enabled ? activeBtn : inactiveBtn);
         }
@@ -382,12 +432,14 @@ class UIController {
 
         @Override
         public void actionPerformed(ActionEvent e) {
+            /* going to the move method on button click and enabling clicked button */
             gameInstance.move(value);
             btn.setEnabled(false);
         }
     }
 
     class Label extends JLabel {
+        /* extended JLabel in order to set the values and titles of the label separately */
         String title;
 
         public Label(String text, int value) {
@@ -401,6 +453,7 @@ class UIController {
     }
 
     private Label createLabel(String title, int value, int x, int y) {
+        /* just label creation, nothing special */
         int width = 140; int height = 20;
         Label label = new Label(title, value);
         label.setBounds(x, y, width, height);
@@ -409,6 +462,7 @@ class UIController {
     }
 
     public int alert(String title, String message, int messageType) {
+        /* alert that the user gets on win and lose */
         Object[] options = { "Restart", "New game", "Exit" };
         return JOptionPane.showOptionDialog(
                 frame,
@@ -425,13 +479,14 @@ class UIController {
 
 class Game {
     public Settings settings;
-    private UIController UI;
+    private final UIController UI;
     private int movesLeft;
     private int currentSum;
     private int previousSelectedValue;
     private int currentSelectedValue;
 
     public Game(UIController UI) {
+        /* constructor with default settings */
         settings = new Settings();
         this.UI = UI;
         this.movesLeft = settings.totalMoves;
@@ -441,6 +496,7 @@ class Game {
     }
 
     public Game(UIController UI, int gameFieldSize, int totalMoves, int targetValue) {
+        /* constructor with given settings */
         settings = new Settings(gameFieldSize, totalMoves, targetValue);
         this.UI = UI;
         this.movesLeft = settings.totalMoves;
@@ -450,6 +506,12 @@ class Game {
     }
 
     public void move(int value) {
+        /* probably, the main method of the program.
+           updating game variables after the user's choice,
+           updating the labels with new variables
+           checking if the user won or lost,
+           re-rendering the grid if the game is not over yet
+         */
         previousSelectedValue = currentSelectedValue;
         currentSelectedValue = value;
         currentSum += value;
@@ -467,11 +529,13 @@ class Game {
     }
 
     private void win() {
+        /* display of alert if the user won */
         int response = UI.alert("Win", "You won! Congratulations. New Game?", JOptionPane.PLAIN_MESSAGE);
         alertResponseReaction(response);
     }
 
     public void gameOver() {
+        /* display of alert with deviation if the user lost */
         int deviation = settings.targetValue - currentSum;
         int response = UI.alert("Game Over", "No more moves left. Deviation: " + deviation + ". Restart?", JOptionPane.ERROR_MESSAGE);
         alertResponseReaction(response);
@@ -479,11 +543,14 @@ class Game {
 
     private void alertResponseReaction(int response) {
         if (response == 0) {
+            /* "restart" option */
             int[] settings = {this.settings.getGameFieldSize(), this.settings.getTotalMoves(), this.settings.getTargetValue()};
             UI.startNewGame(true, settings);
         } else if (response == 1) {
+            /* "new game" option */
             UI.startNewGame(false, null);
         } else {
+            /* "exit" option */
             exitGame();
         }
     }
@@ -492,6 +559,7 @@ class Game {
         System.exit(0);
     }
 
+    /* some getters and setters of the Game below */
     public int getCurrentSum() {
         return currentSum;
     }
@@ -513,28 +581,32 @@ class Game {
     }
 
     class Settings {
-        // Game settings
-        private int gameFieldSize; // N*N is a field size
-        private int totalMoves;
-        private int targetValue;
+        // game settings
+        private final int gameFieldSize; // N*N is a field size
+        private final int totalMoves;
+        private final int targetValue;
 
         public Settings() {
+            /* default settings */
             this.gameFieldSize = 10;
             this.totalMoves = 10;
             this.targetValue = 20;
         }
 
         public Settings(int gameFieldSize, int totalMoves, int targetValue) {
+            /* given settings */
             this.gameFieldSize = gameFieldSize;
             this.totalMoves = totalMoves;
             this.targetValue = targetValue;
         }
 
         public void applySettings(int fields, int moves, int target) {
+            /* restarting the game with new settings */
             int[] settings = {fields, moves, target};
             UI.startNewGame(false, settings);
         }
 
+        /* game modes methods */
         public void setEasyMode() {
             applySettings(10, 15, 20);
         }
@@ -544,9 +616,10 @@ class Game {
         }
 
         public void setHardMode() {
-            applySettings(10, 10, 30);
+            applySettings(10, 10, 50);
         }
 
+        /* some setters and getters of the Settings */
         public int getGameFieldSize() {
             return gameFieldSize;
         }
@@ -563,6 +636,7 @@ class Game {
 
 public class Main {
     public static void main(String[] args) {
+        /* initializing the game */
         UIController uiController = new UIController();
     }
 }
